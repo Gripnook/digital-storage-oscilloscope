@@ -25,8 +25,8 @@ architecture arch of vga_timing_generator_tb is
         port (
             clock   : in  std_logic; -- pixel clock at frequency of VGA mode being used
             reset   : in  std_logic; -- asynchronous reset
-            row     : out integer range 0 to H_PIXELS - 1; -- vertical pixel coordinate
-            column  : out integer range 0 to V_PIXELS - 1; -- horizontal pixel coordinate
+            row     : out integer range 0 to V_PIXELS - 1; -- vertical pixel coordinate
+            column  : out integer range 0 to H_PIXELS - 1; -- horizontal pixel coordinate
             hsync   : out std_logic; -- horizontal sync pulse
             vsync   : out std_logic; -- vertical sync pulse
             blank_n : out std_logic -- active low blanking output
