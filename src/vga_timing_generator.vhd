@@ -41,7 +41,7 @@ architecture behavior of vga_timing_generator is
     signal h_count : integer range 0 to H_PERIOD - 1;
     signal v_count_internal : std_logic_vector(V_BIT_LENGTH - 1 downto 0);
     signal v_count : integer range 0 to V_PERIOD - 1;
-
+    signal count_en_v : std_logic;
     signal h_clr : std_logic;
     signal v_clr : std_logic;
 
@@ -51,72 +51,33 @@ begin
         generic map (LPM_WIDTH => H_BIT_LENGTH)
         port map (clock => clock, aclr => reset, sclr => h_clr, q => h_count_internal)
     h_count <= to_integer(unsigned(h_count_internal));
-
+    
     with h_count select h_clr <=
         '1' when H_PERIOD - 1,
         '0' when others;
 
+    v_count_internaler : lpm_counter
+        generic map (LPM_WIDTH => V_BIT_LENGTH)
+        port map (clock => clock, aclr => reset, sclr => v_clr, q => v_count_internal, cnt_en => count_en_v)
+    v_count <= to_integer(unsigned(v_count_internal));
 
-  n_blank <= '1';  --no direct blanking
+    with v_count select v_clr <=
+	'1' when V_PERIOD - 1,
+	'0' when others;
+    with h_count select count_en_y <=
+	'1' when H_PERIOD - 1,
+	'0' when others;
   
-  process (clock, reset_n)
-    variable h_count_internal  :  integer range 0 to H_PERIOD - 1 := 0;  --horizontal counter (counts the columns)
-    variable v_count_internal  :  integer range 0 to V_PERIOD - 1 := 0;  --vertical counter (counts the rows)
-  begin
-  
-    if (reset_n = '0') then  --reset asserted
-      h_count_internal := 0;         --reset horizontal counter
-      v_count_internal := 0;         --reset vertical counter
-      hsync <= not H_POL;  --deassert horizontal sync
-      vsync <= not V_POL;  --deassert vertical sync
-      disp_ena <= '0';      --disable display
-      column <= 0;          --reset column pixel coordinate
-      row <= 0;             --reset row pixel coordinate
-      
-    elsif (rising_edge(clock)) then
-
-      --counters
-      if (h_count_internal < H_PERIOD - 1) then    --horizontal counter (pixels)
-        h_count_internal := h_count_internal + 1;
-      else
-        h_count_internal := 0;
-        if(v_count_internal < V_PERIOD - 1) then  --veritcal counter (rows)
-          v_count_internal := v_count_internal + 1;
-        else
-          v_count_internal := 0;
-        end if;
-      end if;
-
-      --horizontal sync signal
-      if(h_count_internal < H_PIXELS + H_FP or h_count_internal > H_PIXELS + H_FP + H_PULSE) then
-        hsync <= not H_POL;    --deassert horiztonal sync pulse
-      else
-        hsync <= H_POL;        --assert horiztonal sync pulse
-      end if;
-      
-      --vertical sync signal
-      if(v_count_internal < V_PIXELS + V_FP or v_count_internal > V_PIXELS + V_FP + V_PULSE) then
-        vsync <= not V_POL;    --deassert vertical sync pulse
-      else
-        vsync <= V_POL;        --assert vertical sync pulse
-      end if;
-      
-      --set pixel coordinates
-      if(h_count_internal < H_PIXELS) then  --horiztonal display time
-        column <= h_count_internal;         --set horiztonal pixel coordinate
-      end if;
-      if(v_count_internal < V_PIXELS) then  --vertical display time
-        row <= v_count_internal;            --set vertical pixel coordinate
-      end if;
-
-      --set display enable output
-      if(h_count_internal < H_PIXELS and v_count_internal < V_PIXELS) then  --display time
-        blank_n <= '1';                                  --enable display
-      else                                                --blanking time
-        blank_n <= '0';                                  --disable display
-      end if;
-
-    end if;
-  end process;
+    row <= to_unsigned(v_count - (V_PULSE + V_FP), 10) when (v_count >= V_PULSE + V_FP and v_count <= V_PIXELS + V_PULSE + V_FP) 
+           else to_unsigned(599, 10);
+    column <= to_unsigned(h_count - (H_PULSE + H_FP) , 10) when (h_count >= H_PULSE + H_FP and h_count <= H_PIXELS + H_PULSE + H_FP) 
+           else to_unsigned(799, 10);
+    blank_n <= '1' when ((v_count < V_PULSE + V_FP or v_count > V_PIXELS + V_PULSE + V_FP) or ((h_count < H_PULSE + H_FP or h_count > H_PIXELS + H_PULSE + H_FP))) 
+           else '0';
+	
+    hsync <= '0' when (h_count < 120) else
+		'1';
+    vsync <= '0' when (v_count < 6) else
+		'1';
 
 end behavior;
