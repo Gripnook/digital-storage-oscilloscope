@@ -1,0 +1,72 @@
+*, *:before, *:after {
+    -moz-box-sizing: border-box;
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+}
+canvas {
+    width: 0;
+    height: 0;
+}
+canvas.no-smoothing {
+    image-rendering: optimizeSpeed;            
+    image-rendering: -moz-crisp-edges;         
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: -o-crisp-edges;           
+    image-rendering: crisp-edges;              
+    -ms-interpolation-mode: nearest-neighbor;  
+}
+
+output
+{
+    background-color: #e5e0d8;
+    border: 1px solid #b8b3ad;
+    padding: 3px 6px;
+    
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}
+
+.vga-monitor {
+    display: -moz-inline-stack;
+    display: inline-block;
+    vertical-align: middle;
+    zoom: 1;
+    *display: inline;
+    border: 8px solid #333333;
+    -webkit-border-radius: 6px;
+    -moz-border-radius: 6px;
+    border-radius: 6px;
+    
+    font-size: 0; /* to get rid of space below canvas element */
+}
+
+
+
+#vga-canvas {
+    padding: 0;
+    margin: 0;
+}
+
+
+.vga-frame-holder {
+}
+
+.vga-frame {
+    display: -moz-inline-stack;
+    display: inline-block;
+    vertical-align: middle;
+    zoom: 1;
+    *display: inline;
+
+    background-color: #e5e0d8;
+    border: 1px solid #b8b3ad;
+
+    margin: 4px;
+    padding: 3px;
+
+    cursor: pointer;
+    cursor: hand;
+
+    -webkit-border-radius: 3px;
+    border-radius: 3px;
+}

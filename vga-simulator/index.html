@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>VGA Simulator - Eric Eastwood</title>
+	<link rel="stylesheet" type="text/css" href="./lib/vga-sim.css">
+</head>
+
+<body id="home">
+
+	<h1 class="generic-title no-color"><a href="http://ericeastwood.com/lab/vga-simulator/">VGA Simulator</a></h1>
+
+	<h2>
+		Need Help?
+		<a href="http://ericeastwood.com/blog/8/vga-simulator-getting-started">
+			Here is a blog post that will get you acquainted with the tool
+		</a>
+	</h2>
+
+
+	<form method="post" id="log-form">
+		<div>
+			<label for="log-file">Log File:</label>
+			<input type="file" id="log-file" />
+			
+			<a href="{% static 'elab/vga_sim/write_log.txt' %}" target="_blank" download>Download Example Log File</a>
+		</div>
+
+		
+		<div>
+			<label for="res-x">Resolution X:</label>
+			<input type="text" id="res-x" value="800" size="4" />
+			
+			<label for="res-y">Resolution Y:</label>
+			<input type="text" id="res-y" value="600" size="4" />
+		</div>
+		
+		<div>
+			<label for="px-clk-rate">Pixel Clock Rate (MHz):</label>
+			<input type="text" id="px-clk-rate" value="50" size="4" />
+		</div>
+		
+		<hr /> 
+
+
+		<h6>Fine tuning:</h6>
+
+		<div>
+			<label for="back-porch-x">Back Porch X:</label>
+			<input type="range" id="back-porch-x" min="0" max="200" value="64" style="width: 40%;" />        
+			<output for="back-porch-x"></output>
+		</div>
+		
+		<div>
+			<label for="back-porch-y">Back Porch Y:</label>
+			<input type="range" id="back-porch-y" min="0" max="100" value="23" style="width: 40%;" />        
+			<output for="back-porch-y"></output>
+		</div>
+		
+		<br />
+
+		<div>
+			<input type="submit" value="Submit" />
+			<input type="submit" value="Stop" />
+		</div>
+	</form>
+		
+	<div id="log-form-status"></div>
+	<div id="log-form-progress"></div>
+		
+	<br />
+		
+	<div>
+		Click on frames to review:
+		<br />
+		<div id="vga-frame-holder"></div>
+	</div>
+	
+	<a id="download-frame" href="#0" target="_blank">Download current frame</a>
+
+	<br />
+
+	<div class="vga-monitor">
+		<canvas id="vga-canvas" class="no-smoothing">VGA Screen</canvas>
+	</div>
+		
+	<br />
+	<br />
+		
+	<div> 
+		<strong>Log file guidelines:</strong>
+
+		<ul>
+			<li>Must be a .txt file</li>
+			<li>
+				The .txt file lines should be formatted as so: 
+				<br />
+				<code>current_sim_time time_units: hs vs red green blue</code>
+				<br />
+				ex. <code>535 ns: 1 1 010 010 01</code>
+			</li>
+			<li>Everything should be binary except sim time</li>
+			<li>Pad red, green, and blue with `0` (zeroes) to the max color depth</li>
+			<li>Log a line every rising edge of a clock that is synchronized with your pixel clock and is just as fast or oversamples.</li>
+			<li>Make sure you set your clock period correctly in your testbench!</li>
+		</ul>
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.3/jquery.min.js"></script>
+	<script src="./lib/vga-sim.js"></script>
+</body>
+</html>
