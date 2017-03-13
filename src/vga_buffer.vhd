@@ -1,113 +1,153 @@
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use lpm.lpm_components.all;
 
 entity vga_buffer is 
     generic (
-        V_PIXELS : integer := 600;
         V_POL : std_logic := '0';
-	DATA_WIDTH : integer;
-	ADDR_WIDTH : integer
+        PLOT_HEIGHT : integer := 512;
+        PLOT_WIDTH : integer := 512
     );
     port (
-	clock : in std_logic;
-	reset : in  std_logic;
-	read_bus_grant : in std_logic;
-	read_data : in std_logic_vector(DATA_WIDTH - 1 downto 0)
-        read_en : in  std_logic;
-	address : in integer range 0 to ADDR_WIDTH - 1;
-	column : in  integer range 0 to V_PIXELS - 1;  
-        vsync : in  std_logic; 
-        blank_n : in std_logic;
-        row : out std_logic_vector(DATA_WIDTH - 1 downto 0); 
-        row_nxt : out std_logic_vector(DATA_WIDTH - 1 downto 0) 
+        clock : in std_logic;
+        reset : in std_logic;
+        display_time : in integer range 0 to PLOT_WIDTH - 1;
+        vsync : in std_logic;
+        mem_bus_grant : in std_logic;
+        mem_data : in std_logic_vector(11 downto 0);
+        mem_bus_acquire : out std_logic;
+        mem_address : out std_logic_vector(8 downto 0);
+        data_1 : out integer range 0 to PLOT_HEIGHT - 1;
+        data_2 : out integer range 0 to PLOT_HEIGHT - 1
     );
 end vga_buffer;
 
 architecture arch of vga_buffer is
 
-    type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ, BUFF_WRITE);
-    signal state : state_type := BUS_IDLE;
-    signal addr : std_logic_vector(ADDR_WIDTH - 1 downto 0);
-    signal counter : integer range 0 to 511;
-    signal cnt_en : std_logic;
-    signal write_data : std_logic;
-    signal read_bus_acquire : std_logic;
+    type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ, BUFF_WRITE, BUFF_DONE);
+    signal state : state_type := BUFF_IDLE;
+    
+    type memory is array(0 to PLOT_WIDTH - 1) of integer range 0 to PLOT_HEIGHT - 1;
+    signal mem : memory;
 
-    begin
+    signal write_en : std_logic;
 
-        state_transition : process (clock, reset)
-        begin
-            if (reset = '1') then 
-                state <= BUFF_IDLE;
-            elseif (rising_edge(clock)) then
-                case state is  
-                when BUF_IDLE =>
-                    if (vsync = V_POL) then
-                        state <= BUS_ACQ;
-                    else 
-                        state <= BUS_IDLE;
-                    end if;
-		--Acquiring bus for reading during vsync period
-                when BUS_ACQ;
-                     if (read_bus_grant = '1') then
-                         state <= BUFF_READ;
-                     else
-                         state <= BUS_ACQ;
-                     end if;
-                 --Enable reading when read bus is granted
-                 when BUFF_READ;
-                      if (write_bus_grant = '1') then
-                          state <= BUFF_WRITE;
-                      else 
-                          state <= BUFF_READ;
-                      end if;
-                 --Enable writing once vsync goes low
-                 when BUFF_WRITE;
-                      if (cnt_en = '1') then
-                          if(counter = 511) then
-                              state <= BUFF_IDLE;
-                          else
-                              state <= BUFF_READ;
-                          end if;
-                       else
-                           state <= BUFF_WRITE;
-                       end if;
-                  when others =>
-                       null;      
-                  end case;
-              end if;
-        end process          
-                       
-    outputs : process (read_bus_acquire, row, row_nxt, addr, counter, cnt_en, write_data)
+    signal address : integer range 0 to PLOT_WIDTH - 1;
+    signal addr_sel : std_logic;
+
+    signal count : integer range 0 to PLOT_WIDTH - 1;
+    signal count_en : std_logic;
+    signal count_clr : std_logic;
+
+begin
+
+    state_transition : process (clock, reset)
     begin
-        -- default values
-        row = '0';
-        row_nxt = '0';
-        addr <= (others => '0');
-        counter <= '0';
-        cnt_en <= '0';
-        write_data <= '0';
-        read_bus_acquire <= '0';
+        if (reset = '1') then
+            state <= BUFF_IDLE;
+        elsif (rising_edge(clock)) then
+            case state is
+            when BUFF_IDLE =>
+                if (vsync = V_POL) then
+                    state <= BUS_ACQ;
+                else
+                    state <= BUFF_IDLE;
+                end if;
+            when BUS_ACQ =>
+                if (mem_bus_grant = '1') then
+                    state <= BUFF_READ;
+                else
+                    state <= BUS_ACQ;
+                end if;
+            when BUFF_READ =>
+                state <= BUFF_WRITE;
+            when BUFF_WRITE =>
+                if (count = PLOT_WIDTH - 1) then
+                    state <= BUFF_DONE;
+                else
+                    state <= BUFF_READ;
+                end if;
+            when BUFF_DONE =>
+                if (vsync /= V_POL) then
+                    state <= BUFF_IDLE;
+                else
+                    state <= BUFF_DONE;
+                end if;
+            when others =>
+                 null;
+            end case;
+        end if;
+    end process;
+
+    outputs : process (state, vsync, count)
+    begin
+        -- default outputs
+        mem_bus_acquire <= '0';
+        write_en <= '0';
+        addr_sel <= '0';
+        count_en <= '0';
+        count_clr <= '0';
 
         case state is
         when BUFF_IDLE =>
             if (vsync = '1') then
-                read_bus_acquire <= '1' ;
+                mem_bus_acquire <= '1';
             end if;
         when BUS_ACQ =>
-            addr <= address;
+            mem_bus_acquire <= '1';
         when BUFF_READ =>
-            --todo
+            mem_bus_acquire <= '1';
+            addr_sel <= '1';
         when BUFF_WRITE =>
-            --todo
+            mem_bus_acquire <= '1';
+            write_en <= '1';
+            addr_sel <= '1';
+            if (count = PLOT_WIDTH - 1) then
+                count_clr <= '1';
+            else
+                count_en <= '1';
+            end if;
+        when BUFF_DONE =>
+            null;
         when others =>
             null;
         end case;
     end process;
 
+    counter : process (clock, reset)
+    begin
+        if (reset = '1') then
+            count <= 0;
+        elsif (rising_edge(clock)) then
+            if (count_clr = '1') then
+                count <= 0;
+            elsif (count_en = '1') then
+                count <= count + 1;
+            end if;
+        end if;
+    end process;
+
+    with addr_sel select address <=
+        count when '1',
+        display_time when others;
+    mem_address <= std_logic_vector(to_unsigned(address, 9));
+
+    mem_process : process (clock)
+    begin
+        if (rising_edge(clock)) then
+            if (write_en = '1') then
+                mem(address) <= to_integer(unsigned(mem_data(11 downto 3)));
+            end if;
+
+            data_1 <= mem(address);
+            if (address = PLOT_HEIGHT - 1) then
+                data_2 <= mem(address);
+            else
+                data_2 <= mem(address + 1);
+            end if;
+        end if;
+    end process;
+
 end architecture;
-
-
-        

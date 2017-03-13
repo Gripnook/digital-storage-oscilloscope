@@ -46,6 +46,26 @@ architecture arch of vga is
         );
     end component;
 
+    component vga_buffer is 
+        generic (
+            V_POL : std_logic := '0';
+            PLOT_HEIGHT : integer := 512;
+            PLOT_WIDTH : integer := 512
+        );
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            display_time : in integer range 0 to PLOT_WIDTH - 1;
+            vsync : in std_logic;
+            mem_bus_grant : in std_logic;
+            mem_data : in std_logic_vector(11 downto 0);
+            mem_bus_acquire : out std_logic;
+            mem_address : out std_logic_vector(8 downto 0);
+            data_1 : out integer range 0 to PLOT_HEIGHT - 1;
+            data_2 : out integer range 0 to PLOT_HEIGHT - 1
+        );
+    end component;
+
     constant H_PIXELS : integer   := 800; -- horizontal display width in pixels
     constant H_PULSE  : integer   := 120; -- horizontal sync pulse width in pixels
     constant H_BP     : integer   := 56;  -- horizontal back porch width in pixels
@@ -76,6 +96,7 @@ architecture arch of vga is
     signal rom_address : std_logic_vector(BIT_LENGTH - 1 downto 0); 
     signal background_rgb : std_logic_vector(23 downto 0);
 
+    signal display_time : integer range 0 to PLOT_WIDTH - 1;
     signal data_1, data_2 : integer range 0 to PLOT_HEIGHT - 1 := 0;
     signal display_data : std_logic;
 
@@ -121,6 +142,28 @@ begin
         );
     rom_address <= std_logic_vector(to_unsigned(V_PIXELS * column + row, BIT_LENGTH));
 
+    buff : vga_buffer
+        generic map (
+            V_POL => V_POL,
+            PLOT_HEIGHT => PLOT_HEIGHT,
+            PLOT_WIDTH => PLOT_WIDTH
+        )
+        port map (
+            clock => clock,
+            reset => reset,
+            display_time => display_time,
+            vsync => vsync_internal,
+            mem_bus_grant => mem_bus_grant,
+            mem_data => mem_data,
+            mem_bus_acquire => mem_bus_acquire,
+            mem_address => mem_address,
+            data_1 => data_1,
+            data_2 => data_2
+        );
+
+    display_time <= column - X0 when (column >= X0 and column < X0 + PLOT_WIDTH) else
+        PLOT_WIDTH - 1;
+
     range_comparator : process (data_1, data_2, row, column)
         variable data_row : integer range -Y0 to V_PIXELS - 1 - Y0;
     begin
@@ -149,8 +192,5 @@ begin
     pixel_clock <= clock;
     hsync <= hsync_internal;
     vsync <= vsync_internal;
-
-    -- dummy signals
-    mem_bus_acquire <= '0';
 
 end architecture;

@@ -85,6 +85,7 @@ begin
             mem_bus_grant => mem_bus_grant,
             mem_data => mem_data,
             mem_bus_acquire => mem_bus_acquire,
+            mem_address => mem_address,
             pixel_clock => pixel_clock,
             rgb => rgb,
             hsync => hsync,

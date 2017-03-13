@@ -18,6 +18,7 @@ vlib work
 # Compile components
 vcom vga_timing_generator.vhd
 vcom memory_arbiter.vhd
+vcom vga_buffer.vhd
 vcom vga.vhd
 vcom vga_tb.vhd
 
@@ -30,9 +31,13 @@ force -deposit clock 0 0 ns, 1 10 ns -repeat 20 ns
 # Add the waves
 AddWaves
 
-# Load test signal into memory
+# Load first test signal into memory
 run 10ns
-mem load -infile test_signal.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
+mem load -infile test_signal1.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
+
+# Load second test signal into memory
+run 10ms
+mem load -infile test_signal2.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
 
 # Run
 run 20ms
