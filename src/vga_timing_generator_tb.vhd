@@ -54,13 +54,15 @@ architecture arch of vga_timing_generator_tb is
 begin
 
     dut : vga_timing_generator
-        port map (clock => clock,
-                  reset => reset,
-                  row => row,
-                  column => column,
-                  hsync => hsync,
-                  vsync => vsync,
-                  blank_n => blank_n);
+        port map (
+            clock => clock,
+            reset => reset,
+            row => row,
+            column => column,
+            hsync => hsync,
+            vsync => vsync,
+            blank_n => blank_n
+        );
 
     clock_process : process
     begin
@@ -100,7 +102,7 @@ begin
     b <= rgb(7 downto 0);
 
     output_process : process (clock)
-        file vga_log : text is out "vga_log.txt";
+        file vga_log : text is out "vga_timing_generator_log.txt";
         variable vga_line : line;
     begin
         if (rising_edge(clock)) then
