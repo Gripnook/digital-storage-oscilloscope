@@ -13,8 +13,8 @@ proc AddWaves {} {
 vlib work
 
 # Compile components
-vcom vga_timing_generator.vhd
-vcom vga_timing_generator_tb.vhd
+vcom vga/vga_timing_generator.vhd
+vcom vga/vga_timing_generator_tb.vhd
 
 # Start simulation
 vsim -t ns vga_timing_generator_tb

@@ -127,7 +127,7 @@ begin
 
     background : lpm_rom
         generic map (
-            LPM_FILE => "background.mif",
+            LPM_FILE => "vga/background.mif",
             LPM_ADDRESS_CONTROL => "REGISTERED",
             LPM_NUMWORDS => H_PIXELS * V_PIXELS,
             LPM_OUTDATA => "REGISTERED",

@@ -102,7 +102,7 @@ begin
     b <= rgb(7 downto 0);
 
     output_process : process (clock)
-        file vga_log : text is out "vga_timing_generator_log.txt";
+        file vga_log : text is out "vga/vga_timing_generator_log.txt";
         variable vga_line : line;
     begin
         if (rising_edge(clock)) then

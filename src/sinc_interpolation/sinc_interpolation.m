@@ -1,22 +1,23 @@
 % function to interpolate
-f = @(t) sin(2*pi*200e3*t);
-%f = @(t) sin(2*pi*180e3*t).*(1+sin(20*pi*2e3*t));
+%f = @(t) sin(2*pi*200e3*t);
+f = @(t) sin(2*pi*180e3*t).*(1+sin(20*pi*2e3*t));
 %f = @(t) sin(2*pi*180e3*t).*(1+sin(2*pi*2e3*t))+sin(2*pi*100e3*t).*(1+sin(2*pi*20e3*t))+sin(2*pi*50e3*t).*(1+sin(2*pi*25e3*t));
 
 % sampling parameters
 Fs = 500e3;
 Ts = 1/Fs;
-Ns = 512;
+Ns = 32;
 t = Ts*(0:Ns-1);
 
 % filter parameters
 N = 512;
-Ni = 16;
+Ni = 32;
 tt = Ts/Ni*(0:Ni*Ns-1);
 d = fdesign.lowpass('N,Fp,Ap,Ast', N, 0.8/Ni, 0.01, 80);
 FIR = design(d, 'equiripple');
 
 input = upsample(f(t), Ni);
+%input = f(tt);
 output = Ni*filter(FIR, input);
 
 % remove delay samples

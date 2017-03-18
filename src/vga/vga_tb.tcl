@@ -16,11 +16,11 @@ proc AddWaves {} {
 vlib work
 
 # Compile components
-vcom vga_timing_generator.vhd
-vcom memory_arbiter.vhd
-vcom vga_buffer.vhd
-vcom vga.vhd
-vcom vga_tb.vhd
+vcom vga/vga_timing_generator.vhd
+vcom memory/memory_arbiter.vhd
+vcom vga/vga_buffer.vhd
+vcom vga/vga.vhd
+vcom vga/vga_tb.vhd
 
 # Start simulation
 vsim -t ns vga_tb
@@ -33,11 +33,11 @@ AddWaves
 
 # Load first test signal into memory
 run 10ns
-mem load -infile test_signal1.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
+mem load -infile vga/test_signal1.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
 
 # Load second test signal into memory
 run 10ms
-mem load -infile test_signal2.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
+mem load -infile vga/test_signal2.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
 
 # Run
 run 20ms

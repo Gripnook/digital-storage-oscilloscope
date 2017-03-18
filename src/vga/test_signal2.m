@@ -4,7 +4,7 @@ f = @(t) 2048 + 1024*square(2*pi*(t-64)/T);
 
 %plot(t, f(t));
 
-fid = fopen('../src/test_signal2.txt', 'w');
+fid = fopen('test_signal2.txt', 'w');
 for i = t
     fprintf(fid, '%012s\n', dec2bin(f(i)));
 end

@@ -1,11 +1,11 @@
-src = uint32(imread('../src/background.bmp'));
+src = uint32(imread('background.bmp'));
 data = src(:,:,1)*65536 + src(:,:,2)*256 + src(:,:,3);
 [m,n] = size(data);
 
 N = m*n;
 word_len = 24;
 
-fid = fopen('../src/background.mif', 'w');
+fid = fopen('background.mif', 'w');
 fprintf(fid, 'DEPTH=%d;\n', N);
 fprintf(fid, 'WIDTH=%d;\n', word_len);
 fprintf(fid, 'ADDRESS_RADIX = UNS;\n'); 
