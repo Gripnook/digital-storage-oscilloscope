@@ -4,10 +4,17 @@ use ieee.std_logic_1164.all;
 use ieee.std_logic_textio.all;
 use std.textio.all;
 
-entity vga_timing_generator_tb is
-end vga_timing_generator_tb;
+entity vga_timing_generator_synthesis_tb is
+    port (
+        clock : in std_logic;
+        reset : in std_logic;
+        pixel_clock : out std_logic;
+        hsync, vsync : out std_logic;
+        r, g, b : out std_logic_vector(7 downto 0)
+    );
+end vga_timing_generator_synthesis_tb;
 
-architecture arch of vga_timing_generator_tb is
+architecture arch of vga_timing_generator_synthesis_tb is
 
     component vga_timing_generator is
         generic (
@@ -33,23 +40,11 @@ architecture arch of vga_timing_generator_tb is
         );
     end component;
 
-    constant space : string := " ";
-    constant colon : string := ":";
-
-    constant clock_period : time := 20 ns;
-
-    signal clock : std_logic;
-    signal reset : std_logic;
     signal row : integer;
     signal column : integer;
-    signal hsync : std_logic;
-    signal vsync : std_logic;
     signal blank_n : std_logic;
 
     signal rgb : std_logic_vector(23 downto 0);
-    signal r : std_logic_vector(7 downto 0);
-    signal g : std_logic_vector(7 downto 0);
-    signal b : std_logic_vector(7 downto 0);
 
 begin
 
@@ -63,14 +58,6 @@ begin
             vsync => vsync,
             blank_n => blank_n
         );
-
-    clock_process : process
-    begin
-        clock <= '0';
-        wait for clock_period / 2;
-        clock <= '1';
-        wait for clock_period / 2;
-    end process;
 
     rgb_process : process (row, column, blank_n)
     begin
@@ -103,32 +90,6 @@ begin
     g <= rgb(15 downto 8);
     b <= rgb(7 downto 0);
 
-    output_process : process (clock)
-        file vga_log : text is out "vga/vga_timing_generator_log.txt";
-        variable vga_line : line;
-    begin
-        if (rising_edge(clock)) then
-            write(vga_line, now);
-            write(vga_line, colon & space);
-            write(vga_line, hsync);
-            write(vga_line, space);
-            write(vga_line, vsync);
-            write(vga_line, space);
-            write(vga_line, r);
-            write(vga_line, space);
-            write(vga_line, g);
-            write(vga_line, space);
-            write(vga_line, b);
-            writeline(vga_log, vga_line);
-        end if;
-    end process;
-
-    test_process : process
-    begin
-        reset <= '1';
-        wait until rising_edge(clock);
-        reset <= '0';
-        wait;
-    end process;
+    pixel_clock <= clock;
 
 end architecture;

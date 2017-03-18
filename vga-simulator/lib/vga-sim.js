@@ -117,8 +117,8 @@ $(document).ready(function() {
 		this.resY = 600;
 		this.pixelClockRate = 50; // in MHz
 		
-		this.backPorchX = 64; // From: http://tinyvga.com/vga-timing/640x480@60Hz
-		this.backPorchY = 23;
+		this.backPorchX = 56;
+		this.backPorchY = 38;
 
 		this.hCounter = 0;
 		this.vCounter = 0;
