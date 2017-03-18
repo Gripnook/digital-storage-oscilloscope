@@ -17,7 +17,7 @@ vlib work
 
 # Compile components
 vcom vga/vga_timing_generator.vhd
-vcom memory/memory_arbiter.vhd
+vcom memory/arbitrated_memory.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
 vcom vga/vga_tb.vhd

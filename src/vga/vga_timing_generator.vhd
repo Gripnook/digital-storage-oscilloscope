@@ -11,12 +11,12 @@ entity vga_timing_generator is
         H_PULSE  : integer   := 120; -- horizontal sync pulse width in pixels
         H_BP     : integer   := 56;  -- horizontal back porch width in pixels
         H_FP     : integer   := 64;  -- horizontal front porch width in pixels
-        H_POL    : std_logic := '0'; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
+        H_POL    : std_logic := '1'; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
         V_PIXELS : integer   := 600; -- vertical display width in rows
         V_PULSE  : integer   := 6;   -- vertical sync pulse width in rows
         V_BP     : integer   := 37;  -- vertical back porch width in rows
         V_FP     : integer   := 23;  -- vertical front porch width in rows
-        V_POL    : std_logic := '0'  -- vertical sync pulse polarity (1 = positive, 0 = negative)
+        V_POL    : std_logic := '1'  -- vertical sync pulse polarity (1 = positive, 0 = negative)
     );
     port (
         clock   : in  std_logic; -- pixel clock at frequency of VGA mode being used
@@ -71,9 +71,9 @@ begin
                         ((h_count < H_PULSE + H_BP or h_count >= H_PULSE + H_BP + H_PIXELS)))
         else '1';
     
-    hsync <= H_POL when (h_count < H_PULSE) else
-        not H_POL;
-    vsync <= V_POL when (v_count < V_PULSE) else
-        not V_POL;
+    hsync <= not H_POL when (h_count < H_PULSE) else
+        H_POL;
+    vsync <= not V_POL when (v_count < V_PULSE) else
+        V_POL;
 
 end behavior;

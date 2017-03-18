@@ -1,11 +1,12 @@
 -- A memory module which supports separate readers and writers on different buses.
+-- It gives priority to writers when arbitrating the buses.
 
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
 use lpm.lpm_components.all;
 
-entity memory_arbiter is
+entity arbitrated_memory is
     generic (
         ADDR_WIDTH : integer;
         DATA_WIDTH : integer
@@ -25,9 +26,9 @@ entity memory_arbiter is
         read_bus_grant : out std_logic;
         read_data : out std_logic_vector(DATA_WIDTH - 1 downto 0)
     );
-end memory_arbiter;
+end arbitrated_memory;
 
-architecture arch of memory_arbiter is
+architecture arch of arbitrated_memory is
 
     type state_type is (BUS_IDLE, BUS_WRITE, BUS_READ);
     signal state : state_type := BUS_IDLE;

@@ -24,7 +24,7 @@ architecture arch of vga_tb is
         );
     end component;
 
-    component memory_arbiter is
+    component arbitrated_memory is
         generic (
             ADDR_WIDTH : integer;
             DATA_WIDTH : integer
@@ -92,7 +92,7 @@ begin
             vsync => vsync 
         );
 
-    rom : memory_arbiter
+    rom : arbitrated_memory
         generic map (
             ADDR_WIDTH => 9,
             DATA_WIDTH => 12

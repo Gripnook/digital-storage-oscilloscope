@@ -15,12 +15,12 @@ architecture arch of vga_timing_generator_tb is
             H_PULSE  : integer   := 120; -- horizontal sync pulse width in pixels
             H_BP     : integer   := 56;  -- horizontal back porch width in pixels
             H_FP     : integer   := 64;  -- horizontal front porch width in pixels
-            H_POL    : std_logic := '0'; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
+            H_POL    : std_logic := '1'; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
             V_PIXELS : integer   := 600; -- vertical display width in rows
             V_PULSE  : integer   := 6;   -- vertical sync pulse width in rows
             V_BP     : integer   := 37;  -- vertical back porch width in rows
             V_FP     : integer   := 23;  -- vertical front porch width in rows
-            V_POL    : std_logic := '0'  -- vertical sync pulse polarity (1 = positive, 0 = negative)
+            V_POL    : std_logic := '1'  -- vertical sync pulse polarity (1 = positive, 0 = negative)
         );
         port (
             clock   : in  std_logic; -- pixel clock at frequency of VGA mode being used
