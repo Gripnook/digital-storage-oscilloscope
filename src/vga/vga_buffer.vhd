@@ -2,13 +2,16 @@ library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 use lpm.lpm_components.all;
 
-entity vga_buffer is 
+entity vga_buffer is
     generic (
-        V_POL : std_logic := '0';
+        V_POL : std_logic := '1';
         PLOT_HEIGHT : integer := 512;
-        PLOT_WIDTH : integer := 512
+        PLOT_WIDTH : integer := 512;
+        READ_ADDR_WIDTH : integer := 9;
+        READ_DATA_WIDTH : integer := 12
     );
     port (
         clock : in std_logic;
@@ -16,15 +19,18 @@ entity vga_buffer is
         display_time : in integer range 0 to PLOT_WIDTH - 1;
         vsync : in std_logic;
         mem_bus_grant : in std_logic;
-        mem_data : in std_logic_vector(11 downto 0);
+        mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         mem_bus_acquire : out std_logic;
-        mem_address : out std_logic_vector(8 downto 0);
+        mem_address : out std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
         data_1 : out integer range 0 to PLOT_HEIGHT - 1;
         data_2 : out integer range 0 to PLOT_HEIGHT - 1
     );
 end vga_buffer;
 
 architecture arch of vga_buffer is
+
+    constant PLOT_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_WIDTH))));
+    constant PLOT_HEIGHT_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_HEIGHT))));
 
     type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ, BUFF_WRITE, BUFF_DONE);
     signal state : state_type := BUFF_IDLE;
@@ -37,6 +43,7 @@ architecture arch of vga_buffer is
     signal address : integer range 0 to PLOT_WIDTH - 1;
     signal addr_sel : std_logic;
 
+    signal count_internal : std_logic_vector(PLOT_WIDTH_BIT_LENGTH - 1 downto 0);
     signal count : integer range 0 to PLOT_WIDTH - 1;
     signal count_en : std_logic;
     signal count_clr : std_logic;
@@ -50,7 +57,7 @@ begin
         elsif (rising_edge(clock)) then
             case state is
             when BUFF_IDLE =>
-                if (vsync = V_POL) then
+                if (vsync /= V_POL) then
                     state <= BUS_ACQ;
                 else
                     state <= BUFF_IDLE;
@@ -70,7 +77,7 @@ begin
                     state <= BUFF_READ;
                 end if;
             when BUFF_DONE =>
-                if (vsync /= V_POL) then
+                if (vsync = V_POL) then
                     state <= BUFF_IDLE;
                 else
                     state <= BUFF_DONE;
@@ -92,7 +99,7 @@ begin
 
         case state is
         when BUFF_IDLE =>
-            if (vsync = '1') then
+            if (vsync /= V_POL) then
                 mem_bus_acquire <= '1';
             end if;
         when BUS_ACQ =>
@@ -116,33 +123,31 @@ begin
         end case;
     end process;
 
-    counter : process (clock, reset)
-    begin
-        if (reset = '1') then
-            count <= 0;
-        elsif (rising_edge(clock)) then
-            if (count_clr = '1') then
-                count <= 0;
-            elsif (count_en = '1') then
-                count <= count + 1;
-            end if;
-        end if;
-    end process;
+    address_counter : lpm_counter
+        generic map (LPM_WIDTH => PLOT_WIDTH_BIT_LENGTH)
+        port map (
+            clock => clock,
+            aclr => reset,
+            sclr => count_clr,
+            cnt_en => count_en,
+            q => count_internal
+        );
+    count <= to_integer(unsigned(count_internal));
 
     with addr_sel select address <=
         count when '1',
         display_time when others;
-    mem_address <= std_logic_vector(to_unsigned(address, 9));
+    mem_address <= std_logic_vector(to_unsigned(address, READ_ADDR_WIDTH));
 
     mem_process : process (clock)
     begin
         if (rising_edge(clock)) then
             if (write_en = '1') then
-                mem(address) <= to_integer(unsigned(mem_data(11 downto 3)));
+                mem(address) <= to_integer(unsigned(mem_data(READ_DATA_WIDTH - 1 downto READ_DATA_WIDTH - PLOT_HEIGHT_BIT_LENGTH)));
             end if;
 
             data_1 <= mem(address);
-            if (address = PLOT_HEIGHT - 1) then
+            if (address = PLOT_WIDTH - 1) then
                 data_2 <= mem(address);
             else
                 data_2 <= mem(address + 1);

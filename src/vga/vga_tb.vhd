@@ -10,13 +10,17 @@ end vga_tb;
 architecture arch of vga_tb is
 
     component vga is
+        generic (
+            READ_ADDR_WIDTH : integer := 9;
+            READ_DATA_WIDTH : integer := 12
+        );
         port (
             clock : in std_logic;
             reset : in std_logic;
             mem_bus_grant : in std_logic;
-            mem_data : in std_logic_vector(11 downto 0);
+            mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             mem_bus_acquire : out std_logic;
-            mem_address : out std_logic_vector(8 downto 0);
+            mem_address : out std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
             pixel_clock : out std_logic;
             rgb : out std_logic_vector(23 downto 0);
             hsync : out std_logic;
@@ -54,6 +58,9 @@ architecture arch of vga_tb is
 
     constant clock_period : time := 20 ns;
 
+    constant ADDR_WIDTH : integer := 9;
+    constant DATA_WIDTH : integer := 12;
+
     signal clock : std_logic;
     signal reset : std_logic;
 
@@ -79,6 +86,10 @@ architecture arch of vga_tb is
 begin
 
     dut : vga
+        generic map (
+            READ_ADDR_WIDTH => ADDR_WIDTH,
+            READ_DATA_WIDTH => DATA_WIDTH
+        )
         port map (
             clock => clock,
             reset => reset,
@@ -94,8 +105,8 @@ begin
 
     rom : arbitrated_memory
         generic map (
-            ADDR_WIDTH => 9,
-            DATA_WIDTH => 12
+            ADDR_WIDTH => ADDR_WIDTH,
+            DATA_WIDTH => DATA_WIDTH
         )
         port map (
             clock => clock,
