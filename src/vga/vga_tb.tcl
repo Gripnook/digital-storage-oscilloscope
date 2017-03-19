@@ -33,11 +33,11 @@ AddWaves
 
 # Load first test signal into memory
 run 10ns
-mem load -infile vga/test_signal1.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
+mem load -infile vga/test-signals/test_signal1.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
 
 # Load second test signal into memory
 run 10ms
-mem load -infile vga/test_signal2.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
+mem load -infile vga/test-signals/test_signal2.txt -format bin -filldata 0 /vga_tb/rom/mem/MEMORY/mem_data
 
 # Run
 run 20ms

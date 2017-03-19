@@ -135,7 +135,7 @@ begin
     b <= rgb(7 downto 0);
 
     output_process : process (clock)
-        file vga_log : text is out "vga/vga_log.txt";
+        file vga_log : text is out "vga/test-results/vga_log.txt";
         variable vga_line : line;
     begin
         if (rising_edge(clock)) then
