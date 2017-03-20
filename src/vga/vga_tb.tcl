@@ -5,21 +5,20 @@ proc AddWaves {} {
     add wave -position end sim:/vga_tb/hsync
     add wave -position end sim:/vga_tb/vsync
     add wave -position end sim:/vga_tb/rgb
-    add wave -position end sim:/vga_tb/dut/row
-    add wave -position end sim:/vga_tb/dut/column
-    add wave -position end sim:/vga_tb/dut/rom_address
-    add wave -position end sim:/vga_tb/dut/background_rgb
-    add wave -position end sim:/vga_tb/dut/display_data
-    add wave -position end sim:/vga_tb/dut/blank_n
 }
 
 vlib work
 
 # Compile components
+vcom vga/vga_rom/vga_text_address_generator.vhd
+vcom vga/vga_rom/vga_grid_generator.vhd
+vcom vga/vga_rom/vga_text_generator.vhd
+vcom vga/vga_rom/font_rom.vhd
+vcom vga/vga_rom/vga_rom.vhd
 vcom vga/vga_timing_generator.vhd
-vcom memory/arbitrated_memory.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
+vcom memory/arbitrated_memory.vhd
 vcom vga/vga_tb.vhd
 
 # Start simulation

@@ -50,6 +50,30 @@ architecture arch of vga is
         );
     end component;
 
+    component vga_rom is
+        generic (
+            X0 : integer;
+            Y0 : integer;
+            PLOT_HEIGHT : integer;
+            PLOT_WIDTH : integer
+        );
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            row : in integer range 0 to 599;
+            column : in integer range 0 to 799;
+            horizontal_scale : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV/div
+            vertical_scale : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in us/div
+            trigger_type : in std_logic := '0'; -- '1' for rising edge, '0' for falling edge
+            trigger_frequency : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in 100Hz increments
+            voltage_pp : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV
+            voltage_avg : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV
+            voltage_max : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV
+            voltage_min : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV
+            rgb : out std_logic_vector(23 downto 0)
+        );
+    end component;
+
     component vga_buffer is
         generic (
             V_POL : std_logic := '1';
@@ -139,23 +163,20 @@ begin
             blank_n => blank_n
         );
 
-    background : lpm_rom
+    background : vga_rom
         generic map (
-            LPM_FILE => "vga/background/background.mif",
-            LPM_NUMWORDS => H_PIXELS * V_PIXELS,
-            LPM_WIDTH => 4,
-            LPM_WIDTHAD => BIT_LENGTH
+            X0 => X0,
+            Y0 => Y0,
+            PLOT_WIDTH => PLOT_WIDTH,
+            PLOT_HEIGHT => PLOT_HEIGHT
         )
         port map (
-            address => rom_address,
-            inclock => clock,
-            outclock => clock,
-            q => background_grayscale
+            clock => clock,
+            reset => reset,
+            row => row,
+            column => column,
+            rgb => background_rgb
         );
-    rom_address <= std_logic_vector(to_unsigned(V_PIXELS * column + row, BIT_LENGTH));
-    background_rgb <= background_grayscale & "0000" &
-                      background_grayscale & "0000" &
-                      background_grayscale & "0000";
 
     buff : vga_buffer
         generic map (
