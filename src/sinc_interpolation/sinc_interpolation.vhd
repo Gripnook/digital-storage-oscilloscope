@@ -36,7 +36,7 @@ architecture arch of sinc_interpolation is
 
     constant WRITE_ADDR_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(WRITE_ADDR_WIDTH))));
     type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE_ADDR, SINC_WRITE_DATA, SINC_DONE);
-    signal state : state_type := BUS_ACQ;
+    signal state : state_type := READ_BUS_REQ;
     type memory is array(0 to WRITE_ADDR_WIDTH - 1) of integer range 0 to WRITE_DATA_WIDTH - 1;
     signal mem : memory;
     signal write_en : std_logic;
@@ -59,7 +59,7 @@ begin
                 if (read_bus_grant = '1') then
                     state <= SINC_READ_ADDR; --if read bus is granted, send the address where the date will be read;
                 else
-                    state <= READ_BUS_ACQ;
+                    state <= READ_BUS_REQ;
                 end if;
             when SINC_READ_ADDR =>
                 state <= SINC_READ_DATA; --read the data of sent address;
