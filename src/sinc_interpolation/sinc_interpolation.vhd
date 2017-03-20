@@ -39,9 +39,11 @@ architecture arch of sinc_interpolation is
     signal state : state_type := READ_BUS_REQ;
     type memory is array(0 to WRITE_ADDR_WIDTH - 1) of integer range 0 to WRITE_DATA_WIDTH - 1;
     signal mem : memory;
-    signal write_en : std_logic;
-    signal addr_sel : std_logic;
-    signal address : integer range 0 to WRITE_ADDR_WIDTH - 1; 
+    signal writein_en : std_logic;
+    signal read_addr_sel : std_logic;
+    signal write_addr_sel : std_logic;
+    signal readin_address : integer range 0 to READ_ADDR_WIDTH - 1; 
+    signal writein_address : integer range 0 to WRITE_ADDR_WIDTH - 1; 
     signal count_internal : std_logic_vector(WRITE_ADDR_WIDTH_BIT_LENGTH - 1 downto 0);
     signal count : integer range 0 to WRITE_ADDR_WIDTH - 1;
     signal count_en : std_logic;
@@ -92,5 +94,97 @@ begin
             end case;
         end if;
     end process;
+    
+    outputs : process (state, read_bus_grant, count)
+    begin
+        -- default outputs
+        read_bus_acquire <= '0';
+	write_bus_acquire <= '0';
+        writein_en <= '0'; --enables writing to memory
+        read_addr_sel <= '0'; 
+        write_addr_sel <= '0';
+        count_en <= '0';
+        count_clr <= '0';
+        write_en <= '0'
 
+        case state is
+        when READ_BUS_REQ =>
+            read_bus_acquire <= '1';
+        when SINC_READ_ADDR =>
+            read_bus_acquire <= '1';
+            read_addr_sel <= '1';
+        when SINC_READ_DATA =>
+            read_bus_acquire <= '1';
+            read_addr_sel <= '1';
+        when SINC_PROC =>
+            read_bus_acquire <= '1';
+            read_addr_sel <= '1';
+        when SINC_WRITE_IN =>
+            read_bus_acquire <= '1';
+            writein_en <= '1';
+            read_addr_sel <= '1';
+            if (count = WRITE_DATA_WIDTH - 1) then
+                count_clr <= '1';
+            else
+                count_en <= '1';
+            end if;
+        when WRITE_BUS_REQ =>
+            read_bus_acquire <= '0';
+            write_bus_acquire <= '1';
+        when SINC_WRITE_ADDR =>
+            write_bus_acquire <= '1';
+            write_addr_sel <= '1';
+        when SINC_WRITE_DATA =>
+            write_bus_acquire <= '1';
+            write_addr_sel <= '1';
+            write_en <= '1';
+            if (count = WRITE_DATA_WIDTH - 1) then
+                count_clr <= '1';
+            else
+                count_en <= '1';
+            end if;            
+        when others =>
+            null;
+        end case;
+    end process;
+
+    address_counter : lpm_counter
+        generic map (LPM_WIDTH => PLOT_WIDTH_BIT_LENGTH)
+        port map (
+            clock => clock,
+            aclr => reset,
+            sclr => count_clr,
+            cnt_en => count_en,
+            q => count_internal
+        );
+    count <= to_integer(unsigned(count_internal));
+
+    with read_addr_sel select readin_address <=
+        count when '1',
+        '0' when others; --not sure about this; 
+    read_address <= std_logic_vector(to_unsigned(readin_address, READ_ADDR_WIDTH));
+
+    with write_addr_sel select writein_address <=
+        count when '1',
+        '0' when others; --not sure about this; 
+    write_address <= std_logic_vector(to_unsigned(writein_address, WRITE_ADDR_WIDTH));
+
+    write_to_memory : process (clock) 
+    begin
+        if (rising_edge(clock)) then
+            if (writein_en = '1') then --change the following logic to processed data!
+                mem(readin_address) <= to_integer(unsigned(read_data(READ_DATA_WIDTH - 1 downto 0));
+            end if;
+        end if;
+    end process;
+
+    write_out : process (clock)
+    begin
+        if (rising_edge(clock)) then
+            if (write_en = '1') then 
+                write_data <= mem (writein_address);
+            end if;
+        end if;
+    end process;
+    
 end architecture;
