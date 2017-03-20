@@ -32,7 +32,7 @@ begin
     trigger_comparator : process (adc_data, adc_data_delayed, trigger_ref)
     begin
         trigger <= '0'; -- default output
-        if (adc_data <= trigger_ref and adc_data_delayed > trigger_ref) then
+        if (adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
             trigger <= '1';
         end if;
     end process;
