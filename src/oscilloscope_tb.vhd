@@ -13,6 +13,7 @@ architecture arch of oscilloscope_tb is
         port (
             clock : in std_logic;
             reset_n : in std_logic;
+            timebase : in std_logic_vector(1 downto 0) := "00";
             trigger_up_n : in std_logic;
             trigger_down_n : in std_logic;
             pixel_clock : out std_logic;

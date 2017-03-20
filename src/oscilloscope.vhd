@@ -10,7 +10,7 @@ entity oscilloscope is
         clock : in std_logic;
         reset_n : in std_logic;
         -- adc_dout : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-        -- timebase : in std_logic_vector();
+        timebase : in std_logic_vector(1 downto 0);
         trigger_up_n : in std_logic;
         trigger_down_n : in std_logic;
         pixel_clock : out std_logic;
@@ -103,18 +103,20 @@ architecture arch of oscilloscope is
     constant ADDR_WIDTH : integer := 9;
     constant MAX_UPSAMPLE : integer := 5;
 
-    constant UPSAMPLE_TEMP : integer := 0; -- todo: replace with timebase
-
     signal reset : std_logic;
 
     signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal adc_en : std_logic;
     signal temp_cnt : integer range 0 to 99;
 
+    signal upsample : integer range 0 to MAX_UPSAMPLE;
+
     signal trigger : std_logic;
     signal trigger_ref : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal trigger_ref_up : std_logic;
     signal trigger_ref_en : std_logic;
+    signal trigger_control : std_logic_vector(31 downto 0);
+    signal trigger_control_clr : std_logic;
 
     signal write_bus_grant : std_logic;
     signal write_bus_acquire : std_logic;
@@ -144,12 +146,17 @@ begin
             if (temp_cnt = 99) then
                 temp_cnt <= 0;
                 adc_en <= '1';
-                adc_data <= std_logic_vector(unsigned(adc_data) + 1);
+                adc_data <= std_logic_vector(unsigned(adc_data) + 128);
             else
                 temp_cnt <= temp_cnt + 1;
             end if;
         end if;
     end process;
+
+    trigger_controls_counter : lpm_counter
+        generic map (LPM_WIDTH => 32)
+        port map (clock => clock, aclr => reset, sclr => trigger_control_clr, q => trigger_control);
+    trigger_control_clr <= '1' when trigger_control = std_logic_vector(to_unsigned(20000, 32)) else '0';
 
     trigger_ref_counter : lpm_counter
         generic map (LPM_WIDTH => ADC_DATA_WIDTH)
@@ -160,7 +167,7 @@ begin
             cnt_en => trigger_ref_en,
             q => trigger_ref
         );
-    trigger_ref_en <= trigger_up_n xor trigger_down_n;
+    trigger_ref_en <= trigger_control_clr and (trigger_up_n xor trigger_down_n);
     trigger_ref_up <= not trigger_up_n;
 
     data_acquisition_subsystem : data_acquisition
@@ -175,13 +182,14 @@ begin
             adc_data => adc_data,
             adc_en => adc_en,
             trigger => trigger,
-            upsample => UPSAMPLE_TEMP,
+            upsample => upsample,
             write_bus_grant => write_bus_grant,
             write_bus_acquire => write_bus_acquire,
             write_address => write_address,
             write_en => write_en,
             write_data => write_data
         );
+    upsample <= to_integer(unsigned(timebase));
 
     triggering_subsystem : triggering
         generic map (
