@@ -62,11 +62,22 @@ architecture arch of oscilloscope is
     component vga is
         generic (
             READ_ADDR_WIDTH : integer := 9;
-            READ_DATA_WIDTH : integer := 12
+            READ_DATA_WIDTH : integer := 12;
+            SCALE_WIDTH : integer := 12;
+            FREQUENCY_WIDTH : integer := 12
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
+            horizontal_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0);
+            vertical_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0) := x"200";
+            trigger_type : in std_logic := '1';
+            trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
+            trigger_frequency : in std_logic_vector(FREQUENCY_WIDTH - 1 downto 0) := x"000";
+            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
+            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
+            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
+            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             mem_bus_grant : in std_logic;
             mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             mem_bus_acquire : out std_logic;
@@ -130,6 +141,8 @@ architecture arch of oscilloscope is
     signal read_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
 
     signal rgb : std_logic_vector(23 downto 0);
+
+    signal horizontal_scale : std_logic_vector(11 downto 0);
 
 begin
 
@@ -230,6 +243,8 @@ begin
         port map (
             clock => clock,
             reset => reset,
+            horizontal_scale => horizontal_scale,
+            trigger_level => trigger_ref,
             mem_bus_grant => read_bus_grant,
             mem_data => read_data,
             mem_bus_acquire => read_bus_acquire,
@@ -243,5 +258,11 @@ begin
     r <= rgb(23 downto 16);
     g <= rgb(15 downto 8);
     b <= rgb(7 downto 0);
+
+    process (upsample)
+    begin
+        horizontal_scale <= (others => '0');
+        horizontal_scale(7 - upsample) <= '1';
+    end process;
 
 end architecture;
