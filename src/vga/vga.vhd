@@ -62,8 +62,8 @@ architecture arch of vga is
             reset : in std_logic;
             row : in integer range 0 to 599;
             column : in integer range 0 to 799;
-            horizontal_scale : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV/div
-            vertical_scale : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in us/div
+            horizontal_scale : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in us/div
+            vertical_scale : in std_logic_vector(15 downto 0) := x"0512"; -- BCD in mV/div
             trigger_type : in std_logic := '0'; -- '1' for rising edge, '0' for falling edge
             trigger_frequency : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in 100Hz increments
             voltage_pp : in std_logic_vector(15 downto 0) := (others => '0'); -- BCD in mV

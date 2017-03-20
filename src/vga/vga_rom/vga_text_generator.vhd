@@ -8,8 +8,8 @@ entity vga_text_generator is
         reset : in std_logic;
         text_row : in std_logic_vector(5 downto 0);
         text_col : in std_logic_vector(6 downto 0);
-        horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
-        vertical_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
+        horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
+        vertical_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
         trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_frequency : in std_logic_vector(15 downto 0); -- BCD in 100Hz increments
         voltage_pp : in std_logic_vector(15 downto 0); -- BCD in mV
@@ -56,6 +56,10 @@ architecture arch of vga_text_generator is
     constant AUTHORS_STRING : string := "By Andrei Purcarus and Ze Yu Yang";
     constant AUTHORS : std_logic_vector(8 * AUTHORS_STRING'length - 1 downto 0) := to_slv(AUTHORS_STRING);
     constant AUTHORS_START : integer := (SCREEN_WIDTH - AUTHORS_STRING'length) / 2;
+
+    constant DIVIDER_STRING : string := "------------------------";
+    constant DIVIDER : std_logic_vector(8 * DIVIDER_STRING'length - 1 downto 0) := to_slv(DIVIDER_STRING);
+    constant DIVIDER_START : integer := SCREEN_WIDTH - TEXT_DISPLAY_WIDTH + (TEXT_DISPLAY_WIDTH - DIVIDER_STRING'length) / 2;
 
     constant HORIZONTAL_SCALE_TITLE_STRING : string := "Horizontal Scale";
     constant HORIZONTAL_SCALE_TITLE : std_logic_vector(8 * HORIZONTAL_SCALE_TITLE_STRING'length - 1 downto 0) := to_slv(HORIZONTAL_SCALE_TITLE_STRING);
@@ -134,12 +138,17 @@ begin
                     ascii <= AUTHORS(8 * (t_col - AUTHORS_START) + 6 downto 8 * (t_col - AUTHORS_START));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 6 =>
+            when 9 =>
                 if (t_col >= HORIZONTAL_SCALE_TITLE_START and t_col < HORIZONTAL_SCALE_TITLE_START + HORIZONTAL_SCALE_TITLE_STRING'length) then
                     ascii <= HORIZONTAL_SCALE_TITLE(8 * (t_col - HORIZONTAL_SCALE_TITLE_START) + 6 downto 8 * (t_col - HORIZONTAL_SCALE_TITLE_START));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 8 =>
+            when 10 =>
+                if (t_col >= DIVIDER_START and t_col < DIVIDER_START + DIVIDER_STRING'length) then
+                    ascii <= DIVIDER(8 * (t_col - DIVIDER_START) + 6 downto 8 * (t_col - DIVIDER_START));
+                    rgb <= COLOR_WHITE;
+                end if;
+            when 11 =>
                 if (t_col = HORIZONTAL_SCALE_START and horizontal_scale(15 downto 12) /= x"0") then
                     ascii <= to_ascii(horizontal_scale(15 downto 12));
                     rgb <= COLOR_WHITE;
@@ -156,12 +165,17 @@ begin
                     ascii <= HORIZONTAL_SCALE_DISPLAY(8 * (t_col - (HORIZONTAL_SCALE_START + 4)) + 6 downto 8 * (t_col - (HORIZONTAL_SCALE_START + 4)));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 10 =>
+            when 14 =>
                 if (t_col >= VERTICAL_SCALE_TITLE_START and t_col < VERTICAL_SCALE_TITLE_START + VERTICAL_SCALE_TITLE_STRING'length) then
                     ascii <= VERTICAL_SCALE_TITLE(8 * (t_col - VERTICAL_SCALE_TITLE_START) + 6 downto 8 * (t_col - VERTICAL_SCALE_TITLE_START));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 12 =>
+            when 15 =>
+                if (t_col >= DIVIDER_START and t_col < DIVIDER_START + DIVIDER_STRING'length) then
+                    ascii <= DIVIDER(8 * (t_col - DIVIDER_START) + 6 downto 8 * (t_col - DIVIDER_START));
+                    rgb <= COLOR_WHITE;
+                end if;
+            when 16 =>
                 if (t_col = VERTICAL_SCALE_START and vertical_scale(15 downto 12) /= x"0") then
                     ascii <= to_ascii(vertical_scale(15 downto 12));
                     rgb <= COLOR_WHITE;
@@ -178,12 +192,17 @@ begin
                     ascii <= VERTICAL_SCALE_DISPLAY(8 * (t_col - (VERTICAL_SCALE_START + 4)) + 6 downto 8 * (t_col - (VERTICAL_SCALE_START + 4)));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 14 =>
+            when 19 =>
                 if (t_col >= TRIGGER_TITLE_START and t_col < TRIGGER_TITLE_START + TRIGGER_TITLE_STRING'length) then
                     ascii <= TRIGGER_TITLE(8 * (t_col - TRIGGER_TITLE_START) + 6 downto 8 * (t_col - TRIGGER_TITLE_START));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 16 =>
+            when 20 =>
+                if (t_col >= DIVIDER_START and t_col < DIVIDER_START + DIVIDER_STRING'length) then
+                    ascii <= DIVIDER(8 * (t_col - DIVIDER_START) + 6 downto 8 * (t_col - DIVIDER_START));
+                    rgb <= COLOR_WHITE;
+                end if;
+            when 21 =>
                 if (trigger_type = '1') then
                     if (t_col >= TRIGGER_RISING_EDGE_START and t_col < TRIGGER_RISING_EDGE_START + TRIGGER_RISING_EDGE_STRING'length) then
                         ascii <= TRIGGER_RISING_EDGE(8 * (t_col - TRIGGER_RISING_EDGE_START) + 6 downto 8 * (t_col - TRIGGER_RISING_EDGE_START));
@@ -195,7 +214,7 @@ begin
                         rgb <= COLOR_WHITE;
                     end if;
                 end if;
-            when 17 =>
+            when 22 =>
                 if (t_col >= TRIGGER_FREQUENCY_START and t_col < TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length) then
                     ascii <= TRIGGER_FREQUENCY_DISPLAY(8 * (t_col - TRIGGER_FREQUENCY_START) + 6 downto 8 * (t_col - TRIGGER_FREQUENCY_START));
                     rgb <= COLOR_WHITE;
@@ -224,12 +243,17 @@ begin
                     ascii <= ASCII_z;
                     rgb <= COLOR_WHITE;
                 end if;
-            when 19 =>
+            when 25 =>
                 if (t_col >= VOLTAGE_TITLE_START and t_col < VOLTAGE_TITLE_START + VOLTAGE_TITLE_STRING'length) then
                     ascii <= VOLTAGE_TITLE(8 * (t_col - VOLTAGE_TITLE_START) + 6 downto 8 * (t_col - VOLTAGE_TITLE_START));
                     rgb <= COLOR_WHITE;
                 end if;
-            when 21 =>
+            when 26 =>
+                if (t_col >= DIVIDER_START and t_col < DIVIDER_START + DIVIDER_STRING'length) then
+                    ascii <= DIVIDER(8 * (t_col - DIVIDER_START) + 6 downto 8 * (t_col - DIVIDER_START));
+                    rgb <= COLOR_WHITE;
+                end if;
+            when 27 =>
                 if (t_col >= VOLTAGE_PP_START and t_col < VOLTAGE_PP_START + VOLTAGE_PP_STRING'length) then
                     ascii <= VOLTAGE_PP_DISPLAY(8 * (t_col - VOLTAGE_PP_START) + 6 downto 8 * (t_col - VOLTAGE_PP_START));
                     rgb <= COLOR_WHITE;
@@ -246,7 +270,7 @@ begin
                     ascii <= ASCII_V;
                     rgb <= COLOR_WHITE;
                 end if;
-            when 22 =>
+            when 28 =>
                 if (t_col >= VOLTAGE_AVG_START and t_col < VOLTAGE_AVG_START + VOLTAGE_AVG_STRING'length) then
                     ascii <= VOLTAGE_AVG_DISPLAY(8 * (t_col - VOLTAGE_AVG_START) + 6 downto 8 * (t_col - VOLTAGE_AVG_START));
                     rgb <= COLOR_WHITE;
@@ -263,7 +287,7 @@ begin
                     ascii <= ASCII_V;
                     rgb <= COLOR_WHITE;
                 end if;
-            when 23 =>
+            when 29 =>
                 if (t_col >= VOLTAGE_MAX_START and t_col < VOLTAGE_MAX_START + VOLTAGE_MAX_STRING'length) then
                     ascii <= VOLTAGE_MAX_DISPLAY(8 * (t_col - VOLTAGE_MAX_START) + 6 downto 8 * (t_col - VOLTAGE_MAX_START));
                     rgb <= COLOR_WHITE;
@@ -280,7 +304,7 @@ begin
                     ascii <= ASCII_V;
                     rgb <= COLOR_WHITE;
                 end if;
-            when 24 =>
+            when 30 =>
                 if (t_col >= VOLTAGE_MIN_START and t_col < VOLTAGE_MIN_START + VOLTAGE_MIN_STRING'length) then
                     ascii <= VOLTAGE_MIN_DISPLAY(8 * (t_col - VOLTAGE_MIN_START) + 6 downto 8 * (t_col - VOLTAGE_MIN_START));
                     rgb <= COLOR_WHITE;

@@ -13,8 +13,8 @@ entity vga_rom is
         reset : in std_logic;
         row : in integer range 0 to 599;
         column : in integer range 0 to 799;
-        horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
-        vertical_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
+        horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
+        vertical_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
         trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_frequency : in std_logic_vector(15 downto 0); -- BCD in 100Hz increments
         voltage_pp : in std_logic_vector(15 downto 0); -- BCD in mV
@@ -60,8 +60,8 @@ architecture arch of vga_rom is
             reset : in std_logic;
             text_row : in std_logic_vector(5 downto 0);
             text_col : in std_logic_vector(6 downto 0);
-            horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
-            vertical_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
+            horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
+            vertical_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_frequency : in std_logic_vector(15 downto 0); -- BCD in 100Hz increments
             voltage_pp : in std_logic_vector(15 downto 0); -- BCD in mV
