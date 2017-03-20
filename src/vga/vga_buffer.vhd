@@ -32,7 +32,7 @@ architecture arch of vga_buffer is
     constant PLOT_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_WIDTH))));
     constant PLOT_HEIGHT_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_HEIGHT))));
 
-    type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ, BUFF_WRITE, BUFF_DONE);
+    type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ_ADDR, BUFF_READ_DATA, BUFF_WRITE, BUFF_DONE);
     signal state : state_type := BUFF_IDLE;
     
     type memory is array(0 to PLOT_WIDTH - 1) of integer range 0 to PLOT_HEIGHT - 1;
@@ -64,17 +64,19 @@ begin
                 end if;
             when BUS_ACQ =>
                 if (mem_bus_grant = '1') then
-                    state <= BUFF_READ;
+                    state <= BUFF_READ_ADDR;
                 else
                     state <= BUS_ACQ;
                 end if;
-            when BUFF_READ =>
+            when BUFF_READ_ADDR =>
+                state <= BUFF_READ_DATA;
+            when BUFF_READ_DATA =>
                 state <= BUFF_WRITE;
             when BUFF_WRITE =>
                 if (count = PLOT_WIDTH - 1) then
                     state <= BUFF_DONE;
                 else
-                    state <= BUFF_READ;
+                    state <= BUFF_READ_ADDR;
                 end if;
             when BUFF_DONE =>
                 if (vsync = V_POL) then
@@ -104,7 +106,10 @@ begin
             end if;
         when BUS_ACQ =>
             mem_bus_acquire <= '1';
-        when BUFF_READ =>
+        when BUFF_READ_ADDR =>
+            mem_bus_acquire <= '1';
+            addr_sel <= '1';
+        when BUFF_READ_DATA =>
             mem_bus_acquire <= '1';
             addr_sel <= '1';
         when BUFF_WRITE =>

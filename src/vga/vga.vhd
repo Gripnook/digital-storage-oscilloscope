@@ -98,9 +98,12 @@ architecture arch of vga is
     signal row_delayed : integer range 0 to V_PIXELS - 1;
     signal column_delayed : integer range 0 to H_PIXELS - 1;
     signal hsync_internal : std_logic;
+    signal hsync_delayed : std_logic;
     signal vsync_internal : std_logic;
+    signal vsync_delayed : std_logic;
     signal blank_n : std_logic;
     signal blank_n_delayed : std_logic;
+    signal blank_n_delayed2 : std_logic;
 
     signal rom_address : std_logic_vector(BIT_LENGTH - 1 downto 0);
     signal background_grayscale : std_logic_vector(3 downto 0);
@@ -109,6 +112,7 @@ architecture arch of vga is
     signal display_time : integer range 0 to PLOT_WIDTH - 1;
     signal data_1, data_2 : integer range 0 to PLOT_HEIGHT - 1 := 0;
     signal display_data : std_logic;
+    signal display_data_delayed : std_logic;
 
 begin
 
@@ -138,9 +142,7 @@ begin
     background : lpm_rom
         generic map (
             LPM_FILE => "vga/background/background.mif",
-            LPM_ADDRESS_CONTROL => "REGISTERED",
             LPM_NUMWORDS => H_PIXELS * V_PIXELS,
-            LPM_OUTDATA => "REGISTERED",
             LPM_WIDTH => 4,
             LPM_WIDTHAD => BIT_LENGTH
         )
@@ -193,11 +195,11 @@ begin
         end if;
     end process;
 
-    display_mux : process (display_data, blank_n_delayed, background_rgb)
+    display_mux : process (display_data_delayed, blank_n_delayed2, background_rgb)
     begin
-        if (blank_n_delayed = '0') then
+        if (blank_n_delayed2 = '0') then
             rgb <= (others => '0');
-        elsif (display_data = '1') then
+        elsif (display_data_delayed = '1') then
             rgb <= YELLOW;
         else
             rgb <= background_rgb;
@@ -209,15 +211,23 @@ begin
         if (reset = '1') then
             row_delayed <= 0;
             column_delayed <= 0;
+            display_data_delayed <= '0';
             blank_n_delayed <= '0';
+            blank_n_delayed2 <= '0';
+            hsync_delayed <= '0';
             hsync <= '0';
+            vsync_delayed <= '0';
             vsync <= '0';
         elsif (rising_edge(clock)) then
             row_delayed <= row;
             column_delayed <= column;
+            display_data_delayed <= display_data;
             blank_n_delayed <= blank_n;
-            hsync <= hsync_internal;
-            vsync <= vsync_internal;
+            blank_n_delayed2 <= blank_n_delayed;
+            hsync_delayed <= hsync_internal;
+            hsync <= hsync_delayed;
+            vsync_delayed <= vsync_internal;
+            vsync <= vsync_delayed;
         end if;
     end process;
 
