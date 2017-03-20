@@ -12,10 +12,16 @@ proc AddWaves {} {
 vlib work
 
 # Compile components
+vcom vga/bcd_converter/bcd_converter.vhd
+vcom vga/vga_rom/vga_text_address_generator.vhd
+vcom vga/vga_rom/vga_grid_generator.vhd
+vcom vga/vga_rom/vga_text_generator.vhd
+vcom vga/vga_rom/font_rom.vhd
+vcom vga/vga_rom/vga_rom.vhd
 vcom vga/vga_timing_generator.vhd
-vcom memory/arbitrated_memory.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
+vcom memory/arbitrated_memory.vhd
 vcom data_acquisition/triggering.vhd
 vcom data_acquisition/data_acquisition.vhd
 vcom oscilloscope.vhd

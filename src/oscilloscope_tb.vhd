@@ -10,12 +10,14 @@ end oscilloscope_tb;
 architecture arch of oscilloscope_tb is
 
     component oscilloscope is
+        generic (ADC_DATA_WIDTH : integer := 12);
         port (
             clock : in std_logic;
             reset_n : in std_logic;
-            timebase : in std_logic_vector(1 downto 0) := "00";
+            timebase : in std_logic_vector(1 downto 0);
             trigger_up_n : in std_logic;
             trigger_down_n : in std_logic;
+            trigger_type : in std_logic;
             pixel_clock : out std_logic;
             hsync, vsync : out std_logic;
             r, g, b : out std_logic_vector(7 downto 0)
@@ -33,7 +35,10 @@ architecture arch of oscilloscope_tb is
     signal clock : std_logic;
     signal reset_n : std_logic;
 
-    signal trigger_up_n, trigger_down_n : std_logic;
+    signal timebase : std_logic_vector(1 downto 0) := "00";
+
+    signal trigger_up_n, trigger_down_n : std_logic := '0';
+    signal trigger_type : std_logic := '1';
 
     signal pixel_clock : std_logic;
     signal hsync : std_logic;
@@ -49,8 +54,10 @@ begin
         port map (
             clock => clock,
             reset_n => reset_n,
+            timebase => timebase,
             trigger_up_n => trigger_up_n,
             trigger_down_n => trigger_down_n,
+            trigger_type => trigger_type,
             pixel_clock => pixel_clock,
             hsync => hsync,
             vsync => vsync,
@@ -68,7 +75,7 @@ begin
     end process;
 
     output_process : process (clock)
-        file vga_log : text is out "scope_log.txt";
+        file vga_log : text is out "test-results/oscilloscope_log.txt";
         variable vga_line : line;
     begin
         if (rising_edge(clock)) then
@@ -89,15 +96,9 @@ begin
 
     test_process : process
     begin
-        trigger_up_n <= '0';
-        trigger_down_n <= '0';
         reset_n <= '0';
         wait until rising_edge(clock);
         reset_n <= '1';
-        wait for 10 ms;
-        trigger_up_n <= '1';
-        wait for 40 us;
-        trigger_up_n <= '0';
         wait;
     end process;
 
