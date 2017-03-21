@@ -133,7 +133,7 @@ begin
         elsif (rising_edge(clock)) then
             if (input_reg_en = '1') then
                 upsample_internal <= upsample;
-                trigger_address <= adc_address;
+                trigger_address <= std_logic_vector(unsigned(adc_address) - 1); -- Get the address that actually triggered
             end if;
         end if;
     end process;
