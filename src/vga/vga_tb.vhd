@@ -14,7 +14,7 @@ architecture arch of vga_tb is
             READ_ADDR_WIDTH : integer := 9;
             READ_DATA_WIDTH : integer := 12;
             SCALE_WIDTH : integer := 12;
-            FREQUENCY_WIDTH : integer := 12
+            FREQUENCY_WIDTH : integer := 32
         );
         port (
             clock : in std_logic;
@@ -23,7 +23,7 @@ architecture arch of vga_tb is
             vertical_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0) := x"200";
             trigger_type : in std_logic := '1';
             trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"800";
-            trigger_frequency : in std_logic_vector(FREQUENCY_WIDTH - 1 downto 0) := x"000";
+            trigger_frequency : in std_logic_vector(FREQUENCY_WIDTH - 1 downto 0) := x"00000000";
             voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";

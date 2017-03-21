@@ -14,7 +14,7 @@ architecture arch of oscilloscope_tb is
         port (
             clock : in std_logic;
             reset_n : in std_logic;
-            timebase : in std_logic_vector(1 downto 0);
+            timebase : in std_logic_vector(2 downto 0);
             trigger_up_n : in std_logic;
             trigger_down_n : in std_logic;
             trigger_type : in std_logic;
@@ -35,7 +35,7 @@ architecture arch of oscilloscope_tb is
     signal clock : std_logic;
     signal reset_n : std_logic;
 
-    signal timebase : std_logic_vector(1 downto 0) := "00";
+    signal timebase : std_logic_vector(2 downto 0) := "000";
 
     signal trigger_up_n, trigger_down_n : std_logic := '0';
     signal trigger_type : std_logic := '1';

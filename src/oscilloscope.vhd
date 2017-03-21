@@ -9,7 +9,7 @@ entity oscilloscope is
     port (
         clock : in std_logic;
         reset_n : in std_logic;
-        timebase : in std_logic_vector(1 downto 0);
+        timebase : in std_logic_vector(2 downto 0);
         trigger_up_n : in std_logic;
         trigger_down_n : in std_logic;
         trigger_type : in std_logic;
@@ -49,7 +49,7 @@ architecture arch of oscilloscope is
     component triggering is
         generic (
             DATA_WIDTH : integer := 12;
-            FREQUENCY_WIDTH : integer := 12
+            FREQUENCY_WIDTH : integer := 32
         );
         port (
             clock : in std_logic;
@@ -67,7 +67,7 @@ architecture arch of oscilloscope is
             READ_ADDR_WIDTH : integer := 9;
             READ_DATA_WIDTH : integer := 12;
             SCALE_WIDTH : integer := 12;
-            FREQUENCY_WIDTH : integer := 12
+            FREQUENCY_WIDTH : integer := 32
         );
         port (
             clock : in std_logic;
@@ -117,7 +117,7 @@ architecture arch of oscilloscope is
     constant ADDR_WIDTH : integer := 9;
     constant MAX_UPSAMPLE : integer := 5;
     constant SCALE_WIDTH : integer := 12;
-    constant FREQUENCY_WIDTH : integer := 12;
+    constant FREQUENCY_WIDTH : integer := 32;
 
     signal reset : std_logic;
 
@@ -134,7 +134,7 @@ architecture arch of oscilloscope is
     signal trigger_ref_en : std_logic;
     signal trigger_control : std_logic_vector(31 downto 0);
     signal trigger_control_clr : std_logic;
-    signal trigger_frequency : std_logic_vector(11 downto 0);
+    signal trigger_frequency : std_logic_vector(FREQUENCY_WIDTH - 1 downto 0);
 
     signal write_bus_grant : std_logic;
     signal write_bus_acquire : std_logic;
@@ -165,7 +165,7 @@ begin
             if (temp_cnt = 99) then
                 temp_cnt <= 0;
                 adc_en <= '1';
-                adc_data <= std_logic_vector(unsigned(adc_data) + 128);
+                adc_data <= std_logic_vector(unsigned(adc_data) + 127);
             else
                 temp_cnt <= temp_cnt + 1;
             end if;
@@ -208,7 +208,7 @@ begin
             write_en => write_en,
             write_data => write_data
         );
-    upsample <= to_integer(unsigned(timebase));
+    upsample <= to_integer(unsigned(timebase)) when to_integer(unsigned(timebase)) <= MAX_UPSAMPLE else MAX_UPSAMPLE;
     process (upsample)
     begin
         horizontal_scale <= (others => '0');

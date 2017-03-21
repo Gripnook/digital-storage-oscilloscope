@@ -11,7 +11,7 @@ entity vga_text_generator is
         horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
         vertical_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
         trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
-        trigger_frequency : in std_logic_vector(15 downto 0); -- BCD in 100Hz increments
+        trigger_frequency : in std_logic_vector(23 downto 0); -- BCD in Hz
         trigger_level : in std_logic_vector(15 downto 0); -- BCD in mV
         voltage_pp : in std_logic_vector(15 downto 0); -- BCD in mV
         voltage_avg : in std_logic_vector(15 downto 0); -- BCD in mV
@@ -93,8 +93,8 @@ architecture arch of vga_text_generator is
     constant TRIGGER_LEVEL_START : integer := SCREEN_WIDTH - TEXT_DISPLAY_WIDTH + (TEXT_DISPLAY_WIDTH - (TRIGGER_LEVEL_STRING'length + 6)) / 2;
     constant TRIGGER_FREQUENCY_STRING : string := "Frequency: ";
     constant TRIGGER_FREQUENCY_DISPLAY : std_logic_vector(8 * TRIGGER_FREQUENCY_STRING'length - 1 downto 0) := to_slv(TRIGGER_FREQUENCY_STRING);
-    -- We add 8 to account for the measurement display
-    constant TRIGGER_FREQUENCY_START : integer := SCREEN_WIDTH - TEXT_DISPLAY_WIDTH + (TEXT_DISPLAY_WIDTH - (TRIGGER_FREQUENCY_STRING'length + 8)) / 2;
+    -- We add 10 to account for the measurement display
+    constant TRIGGER_FREQUENCY_START : integer := SCREEN_WIDTH - TEXT_DISPLAY_WIDTH + (TEXT_DISPLAY_WIDTH - (TRIGGER_FREQUENCY_STRING'length + 10)) / 2;
 
     constant VOLTAGE_TITLE_STRING : string := "Measurements";
     constant VOLTAGE_TITLE : std_logic_vector(8 * VOLTAGE_TITLE_STRING'length - 1 downto 0) := to_slv(VOLTAGE_TITLE_STRING);
@@ -240,28 +240,34 @@ begin
                 if (t_col >= TRIGGER_FREQUENCY_START and t_col < TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length) then
                     ascii <= TRIGGER_FREQUENCY_DISPLAY(8 * (t_col - TRIGGER_FREQUENCY_START) + 6 downto 8 * (t_col - TRIGGER_FREQUENCY_START));
                     rgb <= COLOR_TEXT;
-                elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length and trigger_frequency(15 downto 12) /= x"0") then
-                    ascii <= to_ascii(trigger_frequency(15 downto 12));
+                elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length and trigger_frequency(23 downto 20) /= x"0") then
+                    ascii <= to_ascii(trigger_frequency(23 downto 20));
                     rgb <= COLOR_TEXT;
-                elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 1 and trigger_frequency(15 downto 8) /= x"00") then
-                    ascii <= to_ascii(trigger_frequency(11 downto 8));
+                elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 1 and trigger_frequency(23 downto 16) /= x"00") then
+                    ascii <= to_ascii(trigger_frequency(19 downto 16));
                     rgb <= COLOR_TEXT;
                 elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 2) then
-                    ascii <= to_ascii(trigger_frequency(7 downto 4));
+                    ascii <= to_ascii(trigger_frequency(15 downto 12));
                     rgb <= COLOR_TEXT;
                 elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 3) then
                     ascii <= ASCII_DOT;
                     rgb <= COLOR_TEXT;
                 elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 4) then
-                    ascii <= to_ascii(trigger_frequency(3 downto 0));
+                    ascii <= to_ascii(trigger_frequency(11 downto 8));
                     rgb <= COLOR_TEXT;
                 elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 5) then
-                    ascii <= ASCII_k;
+                    ascii <= to_ascii(trigger_frequency(7 downto 4));
                     rgb <= COLOR_TEXT;
                 elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 6) then
-                    ascii <= ASCII_H;
+                    ascii <= to_ascii(trigger_frequency(3 downto 0));
                     rgb <= COLOR_TEXT;
                 elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 7) then
+                    ascii <= ASCII_k;
+                    rgb <= COLOR_TEXT;
+                elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 8) then
+                    ascii <= ASCII_H;
+                    rgb <= COLOR_TEXT;
+                elsif (t_col = TRIGGER_FREQUENCY_START + TRIGGER_FREQUENCY_STRING'length + 9) then
                     ascii <= ASCII_z;
                     rgb <= COLOR_TEXT;
                 end if;

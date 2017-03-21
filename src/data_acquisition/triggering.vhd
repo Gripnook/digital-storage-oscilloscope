@@ -7,7 +7,7 @@ use lpm.lpm_components.all;
 entity triggering is
     generic (
         DATA_WIDTH : integer := 12;
-        FREQUENCY_WIDTH : integer := 12
+        FREQUENCY_WIDTH : integer := 32
     );
     port (
         clock : in std_logic;
@@ -51,11 +51,11 @@ begin
 
             if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
                 trigger <= '1';
-                trigger_frequency <= std_logic_vector(to_unsigned(500000 / to_integer(unsigned(trigger_period)), FREQUENCY_WIDTH));
+                trigger_frequency <= std_logic_vector(to_unsigned(50000000 / to_integer(unsigned(trigger_period)), FREQUENCY_WIDTH));
                 trigger_period_clr <= '1';
             elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data < trigger_ref) then
                 trigger <= '1';
-                trigger_frequency <= std_logic_vector(to_unsigned(500000 / to_integer(unsigned(trigger_period)), FREQUENCY_WIDTH));
+                trigger_frequency <= std_logic_vector(to_unsigned(50000000 / to_integer(unsigned(trigger_period)), FREQUENCY_WIDTH));
                 trigger_period_clr <= '1';
             end if;
         end if;

@@ -10,7 +10,7 @@ entity vga is
         READ_ADDR_WIDTH : integer := 9;
         READ_DATA_WIDTH : integer := 12;
         SCALE_WIDTH : integer := 12;
-        FREQUENCY_WIDTH : integer := 12
+        FREQUENCY_WIDTH : integer := 32
     );
     port (
         clock : in std_logic;
@@ -76,7 +76,7 @@ architecture arch of vga is
             horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
             vertical_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
-            trigger_frequency : in std_logic_vector(15 downto 0); -- BCD in 100Hz increments
+            trigger_frequency : in std_logic_vector(23 downto 0); -- BCD in Hz
             trigger_level : in std_logic_vector(15 downto 0); -- BCD in mV
             voltage_pp : in std_logic_vector(15 downto 0); -- BCD in mV
             voltage_avg : in std_logic_vector(15 downto 0); -- BCD in mV
@@ -171,7 +171,7 @@ architecture arch of vga is
     signal bcd_start : std_logic;
     signal horizontal_scale_bcd : std_logic_vector(15 downto 0);
     signal vertical_scale_bcd : std_logic_vector(15 downto 0);
-    signal trigger_frequency_bcd : std_logic_vector(15 downto 0);
+    signal trigger_frequency_bcd : std_logic_vector(23 downto 0);
     signal trigger_level_bcd : std_logic_vector(15 downto 0);
     signal voltage_pp_bcd : std_logic_vector(15 downto 0);
     signal voltage_avg_bcd : std_logic_vector(15 downto 0);
@@ -270,7 +270,7 @@ begin
         );
 
     trig_freq_bcd : bcd_converter
-        generic map (INPUT_WIDTH => FREQUENCY_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => FREQUENCY_WIDTH, DIGITS => 6)
         port map (
             clock => clock, reset => reset,
             binary => trigger_frequency, start => bcd_start,
