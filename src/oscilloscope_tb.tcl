@@ -12,6 +12,11 @@ proc AddWaves {} {
 vlib work
 
 # Compile components
+vcom signal_generator/delay_equalizer.vhd
+vcom signal_generator/accumulator.vhd
+vcom signal_generator/bit_slice.vhd
+vcom signal_generator/pipelined_frequency_synthesizer.vhd
+vcom signal_generator/analog_waveform_generator.vhd
 vcom vga/bcd_converter/bcd_converter.vhd
 vcom vga/vga_rom/vga_text_address_generator.vhd
 vcom vga/vga_rom/vga_grid_generator.vhd

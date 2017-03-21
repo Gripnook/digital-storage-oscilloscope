@@ -38,6 +38,7 @@ begin
     end process;
 
     -- TODO: Extract division into a multi-cycle module
+    -- TODO: Averaging for the frequency
     trigger_comparator : process (clock, reset)
     begin
         if (reset = '1') then

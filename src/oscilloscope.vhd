@@ -21,6 +21,15 @@ end oscilloscope;
 
 architecture arch of oscilloscope is
 
+    component analog_waveform_generator is
+        generic (N : integer := 10);
+        port (clock : in std_logic;
+              reset : in std_logic;
+              update : in std_logic := '1';
+              frequency_control : in std_logic_vector(N-1 downto 0) := "0000000001";
+              analog_waveform : out std_logic_vector(7 downto 0));
+    end component;
+
     component data_acquisition is
         generic (
             ADDR_WIDTH : integer := 10;
@@ -121,6 +130,7 @@ architecture arch of oscilloscope is
 
     signal reset : std_logic;
 
+    signal analog_waveform : std_logic_vector(7 downto 0);
     signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal adc_en : std_logic;
     signal temp_cnt : integer range 0 to 99;
@@ -153,6 +163,13 @@ begin
 
     reset <= not reset_n;
 
+    arb_gen : analog_waveform_generator
+        port map (
+            clock => clock,
+            reset => reset,
+            analog_waveform => analog_waveform
+        );
+
     -- TODO: Add actual ADC processing (either of the arb gen or the actual ADC)
     adc_processing : process (clock, reset)
     begin
@@ -165,7 +182,7 @@ begin
             if (temp_cnt = 99) then
                 temp_cnt <= 0;
                 adc_en <= '1';
-                adc_data <= std_logic_vector(unsigned(adc_data) + 127);
+                adc_data <= analog_waveform & "0000";
             else
                 temp_cnt <= temp_cnt + 1;
             end if;
