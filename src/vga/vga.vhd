@@ -168,6 +168,8 @@ architecture arch of vga is
     signal display_data : std_logic;
     signal display_data_delayed : std_logic;
 
+    signal mem_bus_grant_delayed : std_logic;
+    
     signal bcd_start : std_logic;
     signal horizontal_scale_bcd : std_logic_vector(15 downto 0);
     signal vertical_scale_bcd : std_logic_vector(15 downto 0);
@@ -251,7 +253,7 @@ begin
             data_2 => data_2
         );
 
-    bcd_start <= '1' when vsync_internal /= V_POL else '0';
+    bcd_start <= '1' when mem_bus_grant = '1' else '0';
 
     hscale_bcd : bcd_converter
         generic map (INPUT_WIDTH => SCALE_WIDTH, DIGITS => 4)
@@ -322,7 +324,7 @@ begin
         if (reset = '1') then
             trigger_level_internal <= (others => '0');
         elsif (rising_edge(clock)) then
-            if (vsync_delayed /= V_POL and vsync_internal /= vsync_delayed) then
+            if (mem_bus_grant = '1' and mem_bus_grant_delayed /= mem_bus_grant) then
                 trigger_level_internal <= trigger_level;
             end if;
         end if;
@@ -373,6 +375,7 @@ begin
             hsync <= '0';
             vsync_delayed <= '0';
             vsync <= '0';
+            mem_bus_grant_delayed <= '0';
         elsif (rising_edge(clock)) then
             row_delayed <= row;
             column_delayed <= column;
@@ -383,6 +386,7 @@ begin
             hsync <= hsync_delayed;
             vsync_delayed <= vsync_internal;
             vsync <= vsync_delayed;
+            mem_bus_grant_delayed <= mem_bus_grant;
         end if;
     end process;
 
