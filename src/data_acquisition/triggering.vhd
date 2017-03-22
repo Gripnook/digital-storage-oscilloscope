@@ -38,7 +38,7 @@ architecture arch of triggering is
         );
     end component;
 
-    constant CLOCK_PERIOD : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32));
+    constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32));
 
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
@@ -86,7 +86,7 @@ begin
         port map (
             clock => clock,
             reset => reset,
-            dividend => CLOCK_PERIOD,
+            dividend => CLOCK_RATE,
             divisor => trigger_period, -- TODO: +1
             start => trigger_internal,
             quotient => trigger_frequency_internal,
