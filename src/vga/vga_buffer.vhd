@@ -4,14 +4,12 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 use lpm.lpm_components.all;
+use work.vga_parameters.all;
 
 entity vga_buffer is
     generic (
-        V_POL : std_logic := '1';
-        PLOT_HEIGHT : integer := 512;
-        PLOT_WIDTH : integer := 512;
-        READ_ADDR_WIDTH : integer := 9;
-        READ_DATA_WIDTH : integer := 12
+        READ_ADDR_WIDTH : integer;
+        READ_DATA_WIDTH : integer
     );
     port (
         clock : in std_logic;
@@ -28,9 +26,6 @@ entity vga_buffer is
 end vga_buffer;
 
 architecture arch of vga_buffer is
-
-    constant PLOT_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_WIDTH))));
-    constant PLOT_HEIGHT_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_HEIGHT))));
 
     type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ_ADDR, BUFF_READ_DATA, BUFF_WRITE, BUFF_DONE);
     signal state : state_type := BUFF_IDLE;

@@ -11,19 +11,19 @@ architecture arch of vga_tb is
 
     component vga is
         generic (
-            READ_ADDR_WIDTH : integer := 9;
-            READ_DATA_WIDTH : integer := 12;
-            SCALE_WIDTH : integer := 12;
-            FREQUENCY_WIDTH : integer := 32
+            READ_ADDR_WIDTH : integer;
+            READ_DATA_WIDTH : integer;
+            SCALE_BIT_LENGTH : integer := 12;
+            FREQUENCY_BIT_LENGTH : integer := 32
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            horizontal_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0) := x"000";
-            vertical_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0) := x"200";
+            horizontal_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0) := x"080";
+            vertical_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0) := x"200";
             trigger_type : in std_logic := '1';
             trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"800";
-            trigger_frequency : in std_logic_vector(FREQUENCY_WIDTH - 1 downto 0) := x"00000000";
+            trigger_frequency : in std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0) := x"00001000";
             voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";

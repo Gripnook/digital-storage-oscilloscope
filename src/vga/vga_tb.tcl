@@ -11,11 +11,12 @@ vlib work
 
 # Compile components
 vcom library/bcd_converter.vhd
-vcom vga/vga_rom/vga_text_address_generator.vhd
-vcom vga/vga_rom/vga_grid_generator.vhd
-vcom vga/vga_rom/vga_text_generator.vhd
-vcom vga/vga_rom/font_rom.vhd
-vcom vga/vga_rom/vga_rom.vhd
+vcom vga/vga_parameters.vhd
+vcom vga/vga_text_address_generator.vhd
+vcom vga/vga_grid_generator.vhd
+vcom vga/vga_text_generator.vhd
+vcom vga/vga_font_rom.vhd
+vcom vga/vga_rom.vhd
 vcom vga/vga_timing_generator.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd

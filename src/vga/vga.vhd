@@ -4,22 +4,23 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 use lpm.lpm_components.all;
+use work.vga_parameters.all;
 
 entity vga is
     generic (
-        READ_ADDR_WIDTH : integer := 9;
-        READ_DATA_WIDTH : integer := 12;
-        SCALE_WIDTH : integer := 12;
-        FREQUENCY_WIDTH : integer := 32
+        READ_ADDR_WIDTH : integer;
+        READ_DATA_WIDTH : integer;
+        SCALE_BIT_LENGTH : integer;
+        FREQUENCY_BIT_LENGTH : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
-        horizontal_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0);
-        vertical_scale : in std_logic_vector(SCALE_WIDTH - 1 downto 0);
+        horizontal_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0);
+        vertical_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0);
         trigger_type : in std_logic;
         trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-        trigger_frequency : in std_logic_vector(FREQUENCY_WIDTH - 1 downto 0);
+        trigger_frequency : in std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0);
         voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
@@ -62,17 +63,11 @@ architecture arch of vga is
     end component;
 
     component vga_rom is
-        generic (
-            X0 : integer;
-            Y0 : integer;
-            PLOT_HEIGHT : integer;
-            PLOT_WIDTH : integer
-        );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            row : in integer range 0 to 599;
-            column : in integer range 0 to 799;
+            row : in integer range 0 to V_PIXELS - 1;
+            column : in integer range 0 to H_PIXELS - 1;
             horizontal_scale : in std_logic_vector(15 downto 0); -- BCD in us/div
             vertical_scale : in std_logic_vector(15 downto 0); -- BCD in mV/div
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
@@ -88,11 +83,8 @@ architecture arch of vga is
 
     component vga_buffer is
         generic (
-            V_POL : std_logic := '1';
-            PLOT_HEIGHT : integer := 512;
-            PLOT_WIDTH : integer := 512;
-            READ_ADDR_WIDTH : integer := 9;
-            READ_DATA_WIDTH : integer := 12
+            READ_ADDR_WIDTH : integer;
+            READ_DATA_WIDTH : integer
         );
         port (
             clock : in std_logic;
@@ -111,41 +103,17 @@ architecture arch of vga is
     component bcd_converter is
         generic (
             INPUT_WIDTH : integer;
-            DIGITS : integer
+            BCD_DIGITS : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
             binary : in std_logic_vector(INPUT_WIDTH - 1 downto 0);
             start : in std_logic;
-            bcd : out std_logic_vector(4 * DIGITS - 1 downto 0);
+            bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
             done : out std_logic := '0' -- unused
         );
     end component;
-
-    constant H_PIXELS : integer   := 800; -- horizontal display width in pixels
-    constant H_PULSE  : integer   := 120; -- horizontal sync pulse width in pixels
-    constant H_BP     : integer   := 56;  -- horizontal back porch width in pixels
-    constant H_FP     : integer   := 64;  -- horizontal front porch width in pixels
-    constant H_POL    : std_logic := '1'; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
-    constant V_PIXELS : integer   := 600; -- vertical display width in rows
-    constant V_PULSE  : integer   := 6;   -- vertical sync pulse width in rows
-    constant V_BP     : integer   := 37;  -- vertical back porch width in rows
-    constant V_FP     : integer   := 23;  -- vertical front porch width in rows
-    constant V_POL    : std_logic := '1'; -- vertical sync pulse polarity (1 = positive, 0 = negative)
-    constant BIT_LENGTH : integer := integer(ceil(log2(real(H_PIXELS * V_PIXELS))));
-
-    -- start coordinates for the waveform plot (bottom-left corner)
-    constant X0 : integer := 16;
-    constant Y0 : integer := 16;
-    -- waveform plot dimensions
-    constant PLOT_WIDTH : integer := 512;
-    constant PLOT_HEIGHT : integer := 512;
-    constant PLOT_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_WIDTH))));
-    constant PLOT_HEIGHT_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_HEIGHT))));
-
-    constant COLOR_WAVEFORM : std_logic_vector(23 downto 0) := x"FFFF00";
-    constant COLOR_TRIGGER : std_logic_vector(23 downto 0) := x"404070";
 
     signal row : integer range 0 to V_PIXELS - 1;
     signal column : integer range 0 to H_PIXELS - 1;
@@ -159,12 +127,10 @@ architecture arch of vga is
     signal blank_n_delayed : std_logic;
     signal blank_n_delayed2 : std_logic;
 
-    signal rom_address : std_logic_vector(BIT_LENGTH - 1 downto 0);
-    signal background_grayscale : std_logic_vector(3 downto 0);
     signal background_rgb : std_logic_vector(23 downto 0);
 
     signal display_time : integer range 0 to PLOT_WIDTH - 1;
-    signal data_1, data_2 : integer range 0 to PLOT_HEIGHT - 1 := 0;
+    signal data_1, data_2 : integer range 0 to PLOT_HEIGHT - 1;
     signal display_data : std_logic;
     signal display_data_delayed : std_logic;
 
@@ -209,12 +175,6 @@ begin
         );
 
     background : vga_rom
-        generic map (
-            X0 => X0,
-            Y0 => Y0,
-            PLOT_WIDTH => PLOT_WIDTH,
-            PLOT_HEIGHT => PLOT_HEIGHT
-        )
         port map (
             clock => clock,
             reset => reset,
@@ -234,9 +194,6 @@ begin
 
     buff : vga_buffer
         generic map (
-            V_POL => V_POL,
-            PLOT_HEIGHT => PLOT_HEIGHT,
-            PLOT_WIDTH => PLOT_WIDTH,
             READ_ADDR_WIDTH => READ_ADDR_WIDTH,
             READ_DATA_WIDTH => READ_DATA_WIDTH
         )
@@ -256,7 +213,7 @@ begin
     bcd_start <= '1' when mem_bus_grant = '1' else '0';
 
     hscale_bcd : bcd_converter
-        generic map (INPUT_WIDTH => SCALE_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => horizontal_scale, start => bcd_start,
@@ -264,7 +221,7 @@ begin
         );
 
     vscale_bcd : bcd_converter
-        generic map (INPUT_WIDTH => SCALE_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => vertical_scale, start => bcd_start,
@@ -272,7 +229,7 @@ begin
         );
 
     trig_freq_bcd : bcd_converter
-        generic map (INPUT_WIDTH => FREQUENCY_WIDTH, DIGITS => 6)
+        generic map (INPUT_WIDTH => FREQUENCY_BIT_LENGTH, BCD_DIGITS => 6)
         port map (
             clock => clock, reset => reset,
             binary => trigger_frequency, start => bcd_start,
@@ -280,7 +237,7 @@ begin
         );
 
     trig_level_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => trigger_level, start => bcd_start,
@@ -288,7 +245,7 @@ begin
         );
 
     vpp_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_pp, start => bcd_start,
@@ -296,7 +253,7 @@ begin
         );
 
     vavg_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_avg, start => bcd_start,
@@ -304,7 +261,7 @@ begin
         );
 
     vmax_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_max, start => bcd_start,
@@ -312,7 +269,7 @@ begin
         );
 
     vmin_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, DIGITS => 4)
+        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_min, start => bcd_start,
@@ -355,9 +312,9 @@ begin
         if (blank_n_delayed2 = '0') then
             rgb <= (others => '0');
         elsif (display_data_delayed = '1') then
-            rgb <= COLOR_WAVEFORM;
+            rgb <= WAVEFORM_COLOR;
         elsif (display_trigger = '1') then
-            rgb <= COLOR_TRIGGER;
+            rgb <= TRIGGER_COLOR;
         else
             rgb <= background_rgb;
         end if;
