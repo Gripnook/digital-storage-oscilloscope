@@ -10,7 +10,10 @@ end oscilloscope_tb;
 architecture arch of oscilloscope_tb is
 
     component oscilloscope is
-        generic (ADC_DATA_WIDTH : integer := 12);
+        generic (
+            ADC_DATA_WIDTH : integer := 12;
+            TEST_FREQUENCY_WIDTH : integer := 6
+        );
         port (
             clock : in std_logic;
             reset_n : in std_logic;
@@ -18,6 +21,7 @@ architecture arch of oscilloscope_tb is
             trigger_up_n : in std_logic;
             trigger_down_n : in std_logic;
             trigger_type : in std_logic;
+            test_frequency : in std_logic_vector(TEST_FREQUENCY_WIDTH - 1 downto 0);
             pixel_clock : out std_logic;
             hsync, vsync : out std_logic;
             r, g, b : out std_logic_vector(7 downto 0)
@@ -40,6 +44,8 @@ architecture arch of oscilloscope_tb is
     signal trigger_up_n, trigger_down_n : std_logic := '0';
     signal trigger_type : std_logic := '1';
 
+    signal test_frequency : std_logic_vector(5 downto 0);
+
     signal pixel_clock : std_logic;
     signal hsync : std_logic;
     signal vsync : std_logic;
@@ -58,6 +64,7 @@ begin
             trigger_up_n => trigger_up_n,
             trigger_down_n => trigger_down_n,
             trigger_type => trigger_type,
+            test_frequency => test_frequency,
             pixel_clock => pixel_clock,
             hsync => hsync,
             vsync => vsync,
@@ -99,6 +106,12 @@ begin
         reset_n <= '0';
         wait until rising_edge(clock);
         reset_n <= '1';
+
+        test_frequency <= "000010";
+        wait for 10ms;
+
+        test_frequency <= "000100";
+
         wait;
     end process;
 

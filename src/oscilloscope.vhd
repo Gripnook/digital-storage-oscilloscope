@@ -5,7 +5,10 @@ use ieee.numeric_std.all;
 use lpm.lpm_components.all;
 
 entity oscilloscope is
-    generic (ADC_DATA_WIDTH : integer := 12);
+    generic (
+        ADC_DATA_WIDTH : integer := 12;
+        TEST_FREQUENCY_WIDTH : integer := 6
+    );
     port (
         clock : in std_logic;
         reset_n : in std_logic;
@@ -13,6 +16,7 @@ entity oscilloscope is
         trigger_up_n : in std_logic;
         trigger_down_n : in std_logic;
         trigger_type : in std_logic;
+        test_frequency : in std_logic_vector(TEST_FREQUENCY_WIDTH - 1 downto 0);
         pixel_clock : out std_logic;
         hsync, vsync : out std_logic;
         r, g, b : out std_logic_vector(7 downto 0)
@@ -22,19 +26,19 @@ end oscilloscope;
 architecture arch of oscilloscope is
 
     component analog_waveform_generator is
-        generic (N : integer := 10);
+        generic (N : integer);
         port (clock : in std_logic;
               reset : in std_logic;
               update : in std_logic := '1';
-              frequency_control : in std_logic_vector(N-1 downto 0) := "0000000001";
+              frequency_control : in std_logic_vector(N-1 downto 0);
               analog_waveform : out std_logic_vector(7 downto 0));
     end component;
 
     component data_acquisition is
         generic (
-            ADDR_WIDTH : integer := 10;
-            DATA_WIDTH : integer := 12;
-            MAX_UPSAMPLE : integer := 5
+            ADDR_WIDTH : integer;
+            DATA_WIDTH : integer;
+            MAX_UPSAMPLE : integer
         );
         port (
             clock : in std_logic;
@@ -57,8 +61,7 @@ architecture arch of oscilloscope is
 
     component triggering is
         generic (
-            DATA_WIDTH : integer := 12;
-            FREQUENCY_BIT_LENGTH : integer := 32
+            DATA_WIDTH : integer
         );
         port (
             clock : in std_logic;
@@ -67,25 +70,23 @@ architecture arch of oscilloscope is
             trigger_type : in std_logic;
             trigger_ref : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             trigger : out std_logic;
-            trigger_frequency : out std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0)
+            trigger_frequency : out std_logic_vector(31 downto 0)
         );
     end component;
 
     component vga is
         generic (
             READ_ADDR_WIDTH : integer;
-            READ_DATA_WIDTH : integer;
-            SCALE_BIT_LENGTH : integer;
-            FREQUENCY_BIT_LENGTH : integer
+            READ_DATA_WIDTH : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            horizontal_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0);
-            vertical_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0) := x"200";
+            horizontal_scale : in std_logic_vector(31 downto 0);
+            vertical_scale : in std_logic_vector(31 downto 0) := x"00000200";
             trigger_type : in std_logic;
             trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-            trigger_frequency : in std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0);
+            trigger_frequency : in std_logic_vector(31 downto 0);
             voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
             voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
@@ -125,18 +126,17 @@ architecture arch of oscilloscope is
 
     constant ADDR_WIDTH : integer := 9;
     constant MAX_UPSAMPLE : integer := 5;
-    constant SCALE_BIT_LENGTH : integer := 12;
-    constant FREQUENCY_BIT_LENGTH : integer := 32;
 
     signal reset : std_logic;
 
+    signal frequency_control : std_logic_vector(15 downto 0);
     signal analog_waveform : std_logic_vector(7 downto 0);
     signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal adc_en : std_logic;
     signal temp_cnt : integer range 0 to 99;
 
     signal upsample : integer range 0 to MAX_UPSAMPLE;
-    signal horizontal_scale : std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0);
+    signal horizontal_scale : std_logic_vector(31 downto 0);
 
     signal trigger : std_logic;
     signal trigger_ref : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
@@ -144,7 +144,7 @@ architecture arch of oscilloscope is
     signal trigger_ref_en : std_logic;
     signal trigger_control : std_logic_vector(31 downto 0);
     signal trigger_control_clr : std_logic;
-    signal trigger_frequency : std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0);
+    signal trigger_frequency : std_logic_vector(31 downto 0);
 
     signal write_bus_grant : std_logic;
     signal write_bus_acquire : std_logic;
@@ -164,13 +164,17 @@ begin
     reset <= not reset_n;
 
     arb_gen : analog_waveform_generator
+        generic map (N => 16)
         port map (
             clock => clock,
             reset => reset,
+            frequency_control => frequency_control,
             analog_waveform => analog_waveform
         );
+    frequency_control(15 downto TEST_FREQUENCY_WIDTH + 4) <= (others => '0');
+    frequency_control(TEST_FREQUENCY_WIDTH + 3 downto 4) <= test_frequency;
+    frequency_control(3 downto 0) <= (others => '1'); -- min frequency
 
-    -- TODO: Add actual ADC processing (either of the arb gen or the actual ADC)
     adc_processing : process (clock, reset)
     begin
         if (reset = '1') then
@@ -234,8 +238,7 @@ begin
 
     triggering_subsystem : triggering
         generic map (
-            DATA_WIDTH => ADC_DATA_WIDTH,
-            FREQUENCY_BIT_LENGTH => FREQUENCY_BIT_LENGTH
+            DATA_WIDTH => ADC_DATA_WIDTH
         )
         port map (
             clock => clock,
@@ -269,9 +272,7 @@ begin
     vga_subsystem : vga
         generic map (
             READ_ADDR_WIDTH => ADDR_WIDTH,
-            READ_DATA_WIDTH => ADC_DATA_WIDTH,
-            SCALE_BIT_LENGTH => SCALE_BIT_LENGTH,
-            FREQUENCY_BIT_LENGTH => FREQUENCY_BIT_LENGTH
+            READ_DATA_WIDTH => ADC_DATA_WIDTH
         )
         port map (
             clock => clock,

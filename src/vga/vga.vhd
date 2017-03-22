@@ -9,18 +9,16 @@ use work.vga_parameters.all;
 entity vga is
     generic (
         READ_ADDR_WIDTH : integer;
-        READ_DATA_WIDTH : integer;
-        SCALE_BIT_LENGTH : integer;
-        FREQUENCY_BIT_LENGTH : integer
+        READ_DATA_WIDTH : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
-        horizontal_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0);
-        vertical_scale : in std_logic_vector(SCALE_BIT_LENGTH - 1 downto 0);
+        horizontal_scale : in std_logic_vector(31 downto 0);
+        vertical_scale : in std_logic_vector(31 downto 0);
         trigger_type : in std_logic;
         trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-        trigger_frequency : in std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0);
+        trigger_frequency : in std_logic_vector(31 downto 0);
         voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
@@ -213,7 +211,7 @@ begin
     bcd_start <= '1' when mem_bus_grant = '1' else '0';
 
     hscale_bcd : bcd_converter
-        generic map (DATA_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => 32, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => horizontal_scale, start => bcd_start,
@@ -221,7 +219,7 @@ begin
         );
 
     vscale_bcd : bcd_converter
-        generic map (DATA_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => 32, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => vertical_scale, start => bcd_start,
@@ -229,7 +227,7 @@ begin
         );
 
     trig_freq_bcd : bcd_converter
-        generic map (DATA_WIDTH => FREQUENCY_BIT_LENGTH, BCD_DIGITS => 6)
+        generic map (DATA_WIDTH => 32, BCD_DIGITS => 6)
         port map (
             clock => clock, reset => reset,
             binary => trigger_frequency, start => bcd_start,

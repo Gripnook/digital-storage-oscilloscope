@@ -6,9 +6,9 @@ use lpm.lpm_components.all;
 
 entity data_acquisition is
     generic (
-        ADDR_WIDTH : integer := 10;
-        DATA_WIDTH : integer := 12;
-        MAX_UPSAMPLE : integer := 5
+        ADDR_WIDTH : integer;
+        DATA_WIDTH : integer;
+        MAX_UPSAMPLE : integer
     );
     port (
         clock : in std_logic;

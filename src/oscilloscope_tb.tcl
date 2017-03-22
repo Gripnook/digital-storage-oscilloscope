@@ -19,6 +19,7 @@ vcom signal_generator/pipelined_frequency_synthesizer.vhd
 vcom signal_generator/analog_waveform_generator.vhd
 vcom library/bcd_converter.vhd
 vcom library/divider.vhd
+vcom library/running_average.vhd
 vcom vga/vga_text_address_generator.vhd
 vcom vga/vga_grid_generator.vhd
 vcom vga/vga_text_generator.vhd
