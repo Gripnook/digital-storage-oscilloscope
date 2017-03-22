@@ -24,16 +24,16 @@ architecture arch of triggering is
 
     component divider is
         generic (
-            N : integer
+            DATA_WIDTH : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            dividend : in std_logic_vector(N-1 downto 0);
-            divisor : in std_logic_vector(N-1 downto 0);
+            dividend : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            divisor : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             start : in std_logic;
-            quotient : out std_logic_vector(N-1 downto 0);
-            remainder : out std_logic_vector(N-1 downto 0) := (others => '0'); -- unused
+            quotient : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+            remainder : out std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0'); -- unused
             done : out std_logic
         );
     end component;
@@ -43,7 +43,6 @@ architecture arch of triggering is
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
     signal trigger_period : std_logic_vector(31 downto 0);
-    signal trigger_period_clr : std_logic;
     signal trigger_frequency_internal : std_logic_vector(FREQUENCY_BIT_LENGTH - 1 downto 0);
     signal trigger_division_done : std_logic;
 
@@ -63,14 +62,11 @@ begin
     begin
         -- default outputs
         trigger_internal <= '0';
-        trigger_period_clr <= '0';
 
         if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
             trigger_internal <= '1';
-            trigger_period_clr <= '1';
         elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data < trigger_ref) then
             trigger_internal <= '1';
-            trigger_period_clr <= '1';
         end if;
     end process;
 
@@ -81,17 +77,17 @@ begin
         port map (
             clock => clock,
             aclr => reset,
-            sclr => trigger_period_clr,
+            sclr => trigger_internal,
             q => trigger_period
         );
 
     div : divider
-        generic map (N => FREQUENCY_BIT_LENGTH)
+        generic map (DATA_WIDTH => FREQUENCY_BIT_LENGTH)
         port map (
             clock => clock,
             reset => reset,
             dividend => CLOCK_PERIOD,
-            divisor => trigger_period,
+            divisor => trigger_period, -- TODO: +1
             start => trigger_internal,
             quotient => trigger_frequency_internal,
             done => trigger_division_done

@@ -102,13 +102,13 @@ architecture arch of vga is
 
     component bcd_converter is
         generic (
-            INPUT_WIDTH : integer;
+            DATA_WIDTH : integer;
             BCD_DIGITS : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            binary : in std_logic_vector(INPUT_WIDTH - 1 downto 0);
+            binary : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             start : in std_logic;
             bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
             done : out std_logic := '0' -- unused
@@ -213,7 +213,7 @@ begin
     bcd_start <= '1' when mem_bus_grant = '1' else '0';
 
     hscale_bcd : bcd_converter
-        generic map (INPUT_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => horizontal_scale, start => bcd_start,
@@ -221,7 +221,7 @@ begin
         );
 
     vscale_bcd : bcd_converter
-        generic map (INPUT_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => SCALE_BIT_LENGTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => vertical_scale, start => bcd_start,
@@ -229,7 +229,7 @@ begin
         );
 
     trig_freq_bcd : bcd_converter
-        generic map (INPUT_WIDTH => FREQUENCY_BIT_LENGTH, BCD_DIGITS => 6)
+        generic map (DATA_WIDTH => FREQUENCY_BIT_LENGTH, BCD_DIGITS => 6)
         port map (
             clock => clock, reset => reset,
             binary => trigger_frequency, start => bcd_start,
@@ -237,7 +237,7 @@ begin
         );
 
     trig_level_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => trigger_level, start => bcd_start,
@@ -245,7 +245,7 @@ begin
         );
 
     vpp_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_pp, start => bcd_start,
@@ -253,7 +253,7 @@ begin
         );
 
     vavg_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_avg, start => bcd_start,
@@ -261,7 +261,7 @@ begin
         );
 
     vmax_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_max, start => bcd_start,
@@ -269,7 +269,7 @@ begin
         );
 
     vmin_bcd : bcd_converter
-        generic map (INPUT_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
+        generic map (DATA_WIDTH => READ_DATA_WIDTH, BCD_DIGITS => 4)
         port map (
             clock => clock, reset => reset,
             binary => voltage_min, start => bcd_start,

@@ -1,4 +1,4 @@
--- An unsigned divider for numbers from 0 to 2 ** (N-1) - 1.
+-- An unsigned divider for numbers from 0 to 2 ** (DATA_WIDTH - 1) - 1.
 
 library ieee;
 library lpm;
@@ -9,48 +9,48 @@ use lpm.lpm_components.all;
 
 entity divider is
     generic (
-        N : integer
+        DATA_WIDTH : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
-        dividend : in std_logic_vector(N-1 downto 0);
-        divisor : in std_logic_vector(N-1 downto 0);
+        dividend : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        divisor : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         start : in std_logic;
-        quotient : out std_logic_vector(N-1 downto 0);
-        remainder : out std_logic_vector(N-1 downto 0);
+        quotient : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+        remainder : out std_logic_vector(DATA_WIDTH - 1 downto 0);
         done : out std_logic
     );
 end divider;
 
 architecture arch of divider is
     
-    constant N_BIT_LENGTH : integer := integer(ceil(log2(real(N))));
+    constant DATA_WIDTH_LENGTH : integer := integer(ceil(log2(real(DATA_WIDTH))));
 
-    constant ZERO : std_logic_vector(N-1 downto 0) := (others => '0');
+    constant ZERO : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
     constant LOW : std_logic := '0';
 
     type state_type is (S_IDLE, S_PRESHIFT, S_DIVIDE, S_DONE);
     signal state : state_type := S_IDLE;
 
-    signal dividend_in : std_logic_vector(N-1 downto 0);
-    signal dividend_internal : std_logic_vector(N-1 downto 0) := (others => '0');
+    signal dividend_in : std_logic_vector(DATA_WIDTH - 1 downto 0);
+    signal dividend_internal : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
     signal dividend_in_select : std_logic;
     signal dividend_in_load : std_logic;
 
-    signal divisor_internal : std_logic_vector(N-1 downto 0) := (others => '0');
+    signal divisor_internal : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
     signal divisor_enable : std_logic;
     signal divisor_load : std_logic;
     signal divisor_shiftleft : std_logic;
 
-    signal quotient_internal : std_logic_vector(N-1 downto 0);
+    signal quotient_internal : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal quotient_clear : std_logic;
     signal quotient_shift : std_logic;
 
-    signal sub_result : signed(N downto 0) := (others => '0');
+    signal sub_result : signed(DATA_WIDTH downto 0) := (others => '0');
     signal sub_nonnegative : std_logic;
 
-    signal bit_count : std_logic_vector(N_BIT_LENGTH - 1 downto 0);
+    signal bit_count : std_logic_vector(DATA_WIDTH_LENGTH - 1 downto 0);
     signal bit_count_enable : std_logic;
     signal bit_count_updown : std_logic;
     signal bit_count_done : std_logic;
@@ -59,7 +59,7 @@ begin
 
     with dividend_in_select select dividend_in <=
         dividend when '1',
-        std_logic_vector(sub_result(N-1 downto 0)) when others;
+        std_logic_vector(sub_result(DATA_WIDTH - 1 downto 0)) when others;
 
     dividend_reg : process (clock, reset)
     begin
@@ -81,11 +81,11 @@ begin
                 if (divisor_load = '1') then
                     divisor_internal <= divisor;
                 elsif (divisor_shiftleft = '1') then
-                    divisor_internal(N-1 downto 1) <= divisor_internal(N-2 downto 0);
+                    divisor_internal(DATA_WIDTH - 1 downto 1) <= divisor_internal(DATA_WIDTH - 2 downto 0);
                     divisor_internal(0) <= '0';
                 else
-                    divisor_internal(N-2 downto 0) <= divisor_internal(N-1 downto 1);
-                    divisor_internal(N-1) <= '0';
+                    divisor_internal(DATA_WIDTH - 2 downto 0) <= divisor_internal(DATA_WIDTH - 1 downto 1);
+                    divisor_internal(DATA_WIDTH - 1) <= '0';
                 end if;
             end if;
         end if;
@@ -99,7 +99,7 @@ begin
             if (quotient_clear = '1') then
                 quotient_internal <= (others => '0');
             elsif (quotient_shift = '1') then
-                quotient_internal(N-1 downto 1) <= quotient_internal(N-2 downto 0);
+                quotient_internal(DATA_WIDTH - 1 downto 1) <= quotient_internal(DATA_WIDTH - 2 downto 0);
                 quotient_internal(0) <= sub_nonnegative;
             end if;
         end if;
@@ -112,7 +112,7 @@ begin
     remainder <= dividend_internal;
 
     bit_counter : lpm_counter
-        generic map (LPM_WIDTH => N_BIT_LENGTH)
+        generic map (LPM_WIDTH => DATA_WIDTH_LENGTH)
         port map (
             clock => clock,
             aclr => reset,
@@ -125,7 +125,7 @@ begin
         variable bit_count_nonzero : std_logic;
     begin
         bit_count_nonzero := '0';
-        for i in 0 to N_BIT_LENGTH - 1 loop
+        for i in 0 to DATA_WIDTH_LENGTH - 1 loop
             bit_count_nonzero := bit_count_nonzero or bit_count(i);
         end loop;
         bit_count_done <= not bit_count_nonzero;

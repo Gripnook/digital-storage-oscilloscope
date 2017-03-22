@@ -7,13 +7,13 @@ use lpm.lpm_components.all;
 
 entity bcd_converter is
     generic (
-        INPUT_WIDTH : integer;
+        DATA_WIDTH : integer;
         BCD_DIGITS : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
-        binary : in std_logic_vector(INPUT_WIDTH - 1 downto 0);
+        binary : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         start : in std_logic;
         bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
         done : out std_logic
@@ -22,7 +22,7 @@ end bcd_converter;
 
 architecture arch of bcd_converter is
 
-    constant INPUT_WIDTH_LENGTH : integer := integer(ceil(log2(real(INPUT_WIDTH)))) + 1;
+    constant DATA_WIDTH_LENGTH : integer := integer(ceil(log2(real(DATA_WIDTH)))) + 1;
 
     constant LOW : std_logic := '0';
 
@@ -41,7 +41,7 @@ architecture arch of bcd_converter is
     signal bcd_enable : std_logic;
     signal bcd_clr : std_logic;
 
-    signal shift_count : std_logic_vector(INPUT_WIDTH_LENGTH - 1 downto 0);
+    signal shift_count : std_logic_vector(DATA_WIDTH_LENGTH - 1 downto 0);
     signal shift_count_clr : std_logic;
     signal shift_count_en : std_logic;
     signal shift_count_done : std_logic;
@@ -50,7 +50,7 @@ begin
 
     input_shiftreg : lpm_shiftreg
         generic map (
-            LPM_WIDTH => INPUT_WIDTH,
+            LPM_WIDTH => DATA_WIDTH,
             LPM_DIRECTION => "LEFT"
         )
         port map (
@@ -64,7 +64,7 @@ begin
         );
 
     shift_counter : lpm_counter
-        generic map (LPM_WIDTH => INPUT_WIDTH_LENGTH)
+        generic map (LPM_WIDTH => DATA_WIDTH_LENGTH)
         port map (
             clock => clock,
             aclr => reset,
@@ -72,7 +72,7 @@ begin
             cnt_en => shift_count_en,
             q => shift_count
         );
-    shift_count_done <= '1' when shift_count = std_logic_vector(to_unsigned(INPUT_WIDTH, INPUT_WIDTH_LENGTH)) else '0';
+    shift_count_done <= '1' when shift_count = std_logic_vector(to_unsigned(DATA_WIDTH, DATA_WIDTH_LENGTH)) else '0';
 
     gen_digits : for i in 0 to BCD_DIGITS - 1 generate
     

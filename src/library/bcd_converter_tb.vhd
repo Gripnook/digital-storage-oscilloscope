@@ -9,13 +9,13 @@ architecture arch of bcd_converter_tb is
 
     component bcd_converter is
         generic (
-            INPUT_WIDTH : integer;
+            DATA_WIDTH : integer;
             BCD_DIGITS : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            binary : in std_logic_vector(INPUT_WIDTH - 1 downto 0);
+            binary : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             start : in std_logic;
             bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
             done : out std_logic
@@ -44,7 +44,7 @@ begin
 
     dut : bcd_converter
         generic map (
-            INPUT_WIDTH => 8,
+            DATA_WIDTH => 8,
             BCD_DIGITS => 4
         )
         port map (

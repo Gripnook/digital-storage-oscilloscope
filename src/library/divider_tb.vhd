@@ -9,16 +9,16 @@ architecture arch of divider_tb is
 
     component divider is
         generic (
-            N : integer
+            DATA_WIDTH : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            dividend : in std_logic_vector(N-1 downto 0);
-            divisor : in std_logic_vector(N-1 downto 0);
+            dividend : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            divisor : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             start : in std_logic;
-            quotient : out std_logic_vector(N-1 downto 0);
-            remainder : out std_logic_vector(N-1 downto 0);
+            quotient : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+            remainder : out std_logic_vector(DATA_WIDTH - 1 downto 0);
             done : out std_logic
         );
     end component;
@@ -47,7 +47,7 @@ begin
 
     dut : divider
         generic map (
-            N => 32
+            DATA_WIDTH => 32
         )
         port map (
             clock => clock,
