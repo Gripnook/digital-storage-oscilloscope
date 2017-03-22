@@ -18,11 +18,12 @@ vcom signal_generator/bit_slice.vhd
 vcom signal_generator/pipelined_frequency_synthesizer.vhd
 vcom signal_generator/analog_waveform_generator.vhd
 vcom library/bcd_converter.vhd
-vcom vga/vga_rom/vga_text_address_generator.vhd
-vcom vga/vga_rom/vga_grid_generator.vhd
-vcom vga/vga_rom/vga_text_generator.vhd
-vcom vga/vga_rom/font_rom.vhd
-vcom vga/vga_rom/vga_rom.vhd
+vcom library/divider.vhd
+vcom vga/vga_text_address_generator.vhd
+vcom vga/vga_grid_generator.vhd
+vcom vga/vga_text_generator.vhd
+vcom vga/vga_font_rom.vhd
+vcom vga/vga_rom.vhd
 vcom vga/vga_timing_generator.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd

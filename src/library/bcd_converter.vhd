@@ -29,7 +29,6 @@ architecture arch of bcd_converter is
     type state_type is (S_IDLE, S_ADD, S_SHIFT, S_DONE);
     signal state : state_type := S_IDLE;
 
-    signal binary_internal : std_logic_vector(INPUT_WIDTH - 1 downto 0);
     signal binary_load : std_logic;
     signal binary_enable : std_logic;
     signal binary_shiftout : std_logic;
@@ -61,8 +60,7 @@ begin
             load => binary_load,
             enable => binary_enable,
             shiftin => LOW,
-            shiftout => binary_shiftout,
-            q => binary_internal
+            shiftout => binary_shiftout
         );
 
     shift_counter : lpm_counter

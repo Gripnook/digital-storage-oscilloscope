@@ -34,11 +34,11 @@ architecture arch of divider is
     signal state : state_type := S_IDLE;
 
     signal dividend_in : std_logic_vector(N-1 downto 0);
-    signal dividend_internal : std_logic_vector(N-1 downto 0);
+    signal dividend_internal : std_logic_vector(N-1 downto 0) := (others => '0');
     signal dividend_in_select : std_logic;
     signal dividend_in_load : std_logic;
 
-    signal divisor_internal : std_logic_vector(N-1 downto 0);
+    signal divisor_internal : std_logic_vector(N-1 downto 0) := (others => '0');
     signal divisor_enable : std_logic;
     signal divisor_load : std_logic;
     signal divisor_shiftleft : std_logic;
@@ -47,7 +47,7 @@ architecture arch of divider is
     signal quotient_clear : std_logic;
     signal quotient_shift : std_logic;
 
-    signal sub_result : signed(N downto 0);
+    signal sub_result : signed(N downto 0) := (others => '0');
     signal sub_nonnegative : std_logic;
 
     signal bit_count : std_logic_vector(N_BIT_LENGTH - 1 downto 0);

@@ -7,7 +7,6 @@ proc AddWaves {} {
     add wave -position end -radix hexadecimal sim:/bcd_converter_tb/bcd
     add wave -position end sim:/bcd_converter_tb/done
     add wave -position end sim:/bcd_converter_tb/dut/state
-    add wave -position end -radix unsigned sim:/bcd_converter_tb/dut/binary_internal
     add wave -position end -radix hexadecimal sim:/bcd_converter_tb/dut/bcd_internal
 }
 
