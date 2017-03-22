@@ -10,14 +10,14 @@ architecture arch of bcd_converter_tb is
     component bcd_converter is
         generic (
             INPUT_WIDTH : integer;
-            DIGITS : integer
+            BCD_DIGITS : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
             binary : in std_logic_vector(INPUT_WIDTH - 1 downto 0);
             start : in std_logic;
-            bcd : out std_logic_vector(4 * DIGITS - 1 downto 0);
+            bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
             done : out std_logic
         );
     end component;
@@ -45,7 +45,7 @@ begin
     dut : bcd_converter
         generic map (
             INPUT_WIDTH => 8,
-            DIGITS => 4
+            BCD_DIGITS => 4
         )
         port map (
             clock => clock,
@@ -71,6 +71,34 @@ begin
         wait until rising_edge(clock);
         reset <= '0';
 
+        binary <= std_logic_vector(to_unsigned(0, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0000", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(1, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0001", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(2, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0002", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(4, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0004", error_count);
+        start <= '0';
+        wait for clock_period;
+
         binary <= std_logic_vector(to_unsigned(13, 8));
         start <= '1';
         wait until done = '1';
@@ -78,24 +106,52 @@ begin
         start <= '0';
         wait for clock_period;
 
+        binary <= std_logic_vector(to_unsigned(16, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0016", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(31, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0031", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(32, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0032", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(64, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0064", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(99, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0099", error_count);
+        start <= '0';
+        wait for clock_period;
+
+        binary <= std_logic_vector(to_unsigned(100, 8));
+        start <= '1';
+        wait until done = '1';
+        assert_equal(bcd, x"0100", error_count);
+        start <= '0';
+        wait for clock_period;
+
         binary <= std_logic_vector(to_unsigned(255, 8));
         start <= '1';
         wait until done = '1';
         assert_equal(bcd, x"0255", error_count);
-        start <= '0';
-        wait for clock_period;
-
-        binary <= std_logic_vector(to_unsigned(128, 8));
-        start <= '1';
-        wait until done = '1';
-        assert_equal(bcd, x"0128", error_count);
-        start <= '0';
-        wait for clock_period;
-
-        binary <= std_logic_vector(to_unsigned(0, 8));
-        start <= '1';
-        wait until done = '1';
-        assert_equal(bcd, x"0000", error_count);
         start <= '0';
         wait for clock_period;
 

@@ -8,14 +8,14 @@ use lpm.lpm_components.all;
 entity bcd_converter is
     generic (
         INPUT_WIDTH : integer;
-        DIGITS : integer
+        BCD_DIGITS : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
         binary : in std_logic_vector(INPUT_WIDTH - 1 downto 0);
         start : in std_logic;
-        bcd : out std_logic_vector(4 * DIGITS - 1 downto 0);
+        bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
         done : out std_logic
     );
 end bcd_converter;
@@ -34,10 +34,10 @@ architecture arch of bcd_converter is
     signal binary_enable : std_logic;
     signal binary_shiftout : std_logic;
 
-    signal bcd_digits : std_logic_vector(4 * DIGITS - 1 downto 0);
-    signal bcd_sums : std_logic_vector(4 * DIGITS - 1 downto 0);
-    signal bcd_shifts : std_logic_vector(0 to DIGITS);
-    signal bcd_enables : std_logic_vector(0 to DIGITS - 1);
+    signal bcd_internal : std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
+    signal bcd_sums : std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
+    signal bcd_shifts : std_logic_vector(0 to BCD_DIGITS);
+    signal bcd_enables : std_logic_vector(0 to BCD_DIGITS - 1);
     signal bcd_load : std_logic;
     signal bcd_enable : std_logic;
     signal bcd_clr : std_logic;
@@ -76,7 +76,8 @@ begin
         );
     shift_count_done <= '1' when shift_count = std_logic_vector(to_unsigned(INPUT_WIDTH, INPUT_WIDTH_LENGTH)) else '0';
 
-    gen_digits : for i in 0 to DIGITS - 1 generate
+    gen_digits : for i in 0 to BCD_DIGITS - 1 generate
+    
         digit_shiftreg : lpm_shiftreg
             generic map (
                 LPM_WIDTH => 4,
@@ -91,17 +92,17 @@ begin
                 enable => bcd_enables(i),
                 shiftin => bcd_shifts(i),
                 shiftout => bcd_shifts(i+1),
-                q => bcd_digits(4 * i + 3 downto 4 * i)
+                q => bcd_internal(4 * i + 3 downto 4 * i)
             );
 
-        bcd_sums(4 * i + 3 downto 4 * i) <= std_logic_vector(unsigned(bcd_digits(4 * i + 3 downto 4 * i)) + x"3");
-        bcd_enables(i) <= bcd_enable when (bcd_load = '0') or ((bcd_load = '1') and (bcd_digits(4 * i + 3 downto 4 * i) > x"4")) else '0';
+        bcd_sums(4 * i + 3 downto 4 * i) <= std_logic_vector(unsigned(bcd_internal(4 * i + 3 downto 4 * i)) + x"3");
+        bcd_enables(i) <= bcd_enable when (bcd_load = '0') or ((bcd_load = '1') and (bcd_internal(4 * i + 3 downto 4 * i) > x"4")) else '0';
 
     end generate;
 
     bcd_shifts(0) <= binary_shiftout;
 
-    bcd <= bcd_digits;
+    bcd <= bcd_internal;
 
     state_transitions : process (clock, reset)
     begin
