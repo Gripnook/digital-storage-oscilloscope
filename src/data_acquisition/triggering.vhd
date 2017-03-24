@@ -52,11 +52,11 @@ architecture arch of triggering is
     end component;
 
     constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32));
+    constant ONE : std_logic_vector(31 downto 0) := x"00000001";
 
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
     signal trigger_delayed : std_logic;
-    signal trigger_delayed2 : std_logic;
     signal trigger_period : std_logic_vector(31 downto 0);
     signal average_trigger_period : std_logic_vector(31 downto 0);
     signal trigger_frequency_internal : std_logic_vector(31 downto 0);
@@ -69,11 +69,9 @@ begin
         if (reset = '1') then
             adc_data_delayed <= (others => '0');
             trigger_delayed <= '0';
-            trigger_delayed2 <= '0';
         elsif (rising_edge(clock)) then
             adc_data_delayed <= adc_data;
             trigger_delayed <= trigger_internal;
-            trigger_delayed2 <= trigger_delayed;
         end if;
     end process;
 
@@ -96,7 +94,8 @@ begin
         port map (
             clock => clock,
             aclr => reset,
-            sclr => trigger_delayed,
+            sload => trigger_internal,
+            data => ONE,
             q => trigger_period
         );
 
@@ -108,7 +107,7 @@ begin
         port map (
             clock => clock,
             reset => reset,
-            load => trigger_delayed,
+            load => trigger_internal,
             data_in => trigger_period,
             average => average_trigger_period
         );
@@ -120,7 +119,7 @@ begin
             reset => reset,
             dividend => CLOCK_RATE,
             divisor => average_trigger_period,
-            start => trigger_delayed2,
+            start => trigger_delayed,
             quotient => trigger_frequency_internal,
             done => trigger_division_done
         );

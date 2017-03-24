@@ -144,17 +144,21 @@ begin
         wait until rising_edge(clock);
         reset <= '0';
 
-        frequency_control <= x"0200";
+        -- 1 kHz
+        frequency_control <= x"0083";
+        wait for 40 ms;
+
+        -- 10 kHz
+        frequency_control <= x"051F";
         wait for 20 ms;
 
-        frequency_control <= x"0400";
-        wait for 20 ms;
+        -- 100 kHz
+        frequency_control <= x"3333";
+        wait for 10 ms;
 
-        frequency_control <= x"0800";
-        wait for 20 ms;
-
-        frequency_control <= x"1000";
-        wait for 20 ms;
+        -- 200 kHz
+        frequency_control <= x"6666";
+        wait for 10 ms;
 
         wait;
     end process;
