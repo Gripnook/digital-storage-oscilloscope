@@ -12,19 +12,32 @@ architecture arch of oscilloscope_tb is
     component oscilloscope is
         generic (
             ADC_DATA_WIDTH : integer := 12;
-            TEST_FREQUENCY_WIDTH : integer := 6
+            MAX_UPSAMPLE : integer := 5
         );
         port (
             clock : in std_logic;
-            reset_n : in std_logic;
-            timebase : in std_logic_vector(2 downto 0);
-            trigger_up_n : in std_logic;
-            trigger_down_n : in std_logic;
-            trigger_type : in std_logic;
-            test_frequency : in std_logic_vector(TEST_FREQUENCY_WIDTH - 1 downto 0);
+            reset : in std_logic;
+            horizontal_scale : in std_logic_vector(31 downto 0) := x"00000080";
+            vertical_scale : in std_logic_vector(31 downto 0) := x"00000200";
+            upsample : in integer range 0 to MAX_UPSAMPLE := 0;
+            trigger_type : in std_logic := '1';
+            trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0) := x"800";
+            adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+            adc_en : in std_logic;
             pixel_clock : out std_logic;
             hsync, vsync : out std_logic;
             r, g, b : out std_logic_vector(7 downto 0)
+        );
+    end component;
+
+    component analog_waveform_generator is
+        generic (N : integer);
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            update : in std_logic := '1';
+            frequency_control : in std_logic_vector(N-1 downto 0);
+            analog_waveform : out std_logic_vector(7 downto 0)
         );
     end component;
 
@@ -37,14 +50,14 @@ architecture arch of oscilloscope_tb is
     constant clock_period : time := 20 ns;
 
     signal clock : std_logic;
-    signal reset_n : std_logic;
+    signal reset : std_logic;
 
-    signal timebase : std_logic_vector(2 downto 0) := "000";
+    signal adc_data : std_logic_vector(11 downto 0);
+    signal adc_en : std_logic;
+    signal adc_sample_count : integer range 0 to 99;
 
-    signal trigger_up_n, trigger_down_n : std_logic := '0';
-    signal trigger_type : std_logic := '1';
-
-    signal test_frequency : std_logic_vector(5 downto 0);
+    signal frequency_control : std_logic_vector(15 downto 0);
+    signal analog_waveform : std_logic_vector(7 downto 0);
 
     signal pixel_clock : std_logic;
     signal hsync : std_logic;
@@ -59,12 +72,9 @@ begin
     dut : oscilloscope
         port map (
             clock => clock,
-            reset_n => reset_n,
-            timebase => timebase,
-            trigger_up_n => trigger_up_n,
-            trigger_down_n => trigger_down_n,
-            trigger_type => trigger_type,
-            test_frequency => test_frequency,
+            reset => reset,
+            adc_data => adc_data,
+            adc_en => adc_en,
             pixel_clock => pixel_clock,
             hsync => hsync,
             vsync => vsync,
@@ -72,6 +82,33 @@ begin
             g => g,
             b => b
         );
+
+    sig_gen : analog_waveform_generator
+        generic map (N => 16)
+        port map (
+            clock => clock,
+            reset => reset,
+            frequency_control => frequency_control,
+            analog_waveform => analog_waveform
+        );
+
+    adc_data <= analog_waveform & "0000";
+
+    adc_processing : process (clock, reset)
+    begin
+        if (reset = '1') then
+            adc_sample_count <= 0;
+            adc_en <= '0';
+        elsif (rising_edge(clock)) then
+            adc_en <= '0';
+            if (adc_sample_count = 99) then
+                adc_sample_count <= 0;
+                adc_en <= '1';
+            else
+                adc_sample_count <= adc_sample_count + 1;
+            end if;
+        end if;
+    end process;
 
     clock_process : process
     begin
@@ -103,14 +140,21 @@ begin
 
     test_process : process
     begin
-        reset_n <= '0';
+        reset <= '1';
         wait until rising_edge(clock);
-        reset_n <= '1';
+        reset <= '0';
 
-        test_frequency <= "000010";
-        wait for 10ms;
+        frequency_control <= x"0200";
+        wait for 20 ms;
 
-        test_frequency <= "000100";
+        frequency_control <= x"0400";
+        wait for 20 ms;
+
+        frequency_control <= x"0800";
+        wait for 20 ms;
+
+        frequency_control <= x"1000";
+        wait for 20 ms;
 
         wait;
     end process;

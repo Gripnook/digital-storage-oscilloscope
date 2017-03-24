@@ -11,6 +11,7 @@ vlib work
 
 # Compile components
 vcom library/bcd_converter.vhd
+vcom library/arbitrated_memory.vhd
 vcom vga/vga_parameters.vhd
 vcom vga/vga_text_address_generator.vhd
 vcom vga/vga_grid_generator.vhd
@@ -20,7 +21,6 @@ vcom vga/vga_rom.vhd
 vcom vga/vga_timing_generator.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
-vcom memory/arbitrated_memory.vhd
 vcom vga/vga_tb.vhd
 
 # Start simulation

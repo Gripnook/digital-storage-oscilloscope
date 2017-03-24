@@ -2,7 +2,6 @@ library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.math_real.all;
 use lpm.lpm_components.all;
 use work.vga_parameters.all;
 
@@ -38,16 +37,16 @@ architecture arch of vga is
 
     component vga_timing_generator is
         generic (
-            H_PIXELS : integer   := 800; -- horizontal display width in pixels
-            H_PULSE  : integer   := 120; -- horizontal sync pulse width in pixels
-            H_BP     : integer   := 56;  -- horizontal back porch width in pixels
-            H_FP     : integer   := 64;  -- horizontal front porch width in pixels
-            H_POL    : std_logic := '1'; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
-            V_PIXELS : integer   := 600; -- vertical display width in rows
-            V_PULSE  : integer   := 6;   -- vertical sync pulse width in rows
-            V_BP     : integer   := 37;  -- vertical back porch width in rows
-            V_FP     : integer   := 23;  -- vertical front porch width in rows
-            V_POL    : std_logic := '1'  -- vertical sync pulse polarity (1 = positive, 0 = negative)
+            H_PIXELS : integer; -- horizontal display width in pixels
+            H_PULSE  : integer; -- horizontal sync pulse width in pixels
+            H_BP     : integer; -- horizontal back porch width in pixels
+            H_FP     : integer; -- horizontal front porch width in pixels
+            H_POL    : std_logic; -- horizontal sync pulse polarity (1 = positive, 0 = negative)
+            V_PIXELS : integer; -- vertical display width in rows
+            V_PULSE  : integer; -- vertical sync pulse width in rows
+            V_BP     : integer; -- vertical back porch width in rows
+            V_FP     : integer; -- vertical front porch width in rows
+            V_POL    : std_logic -- vertical sync pulse polarity (1 = positive, 0 = negative)
         );
         port (
             clock   : in  std_logic; -- pixel clock at frequency of VGA mode being used

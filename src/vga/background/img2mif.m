@@ -10,8 +10,8 @@ word_len = 4;
 fid = fopen('background.mif', 'w');
 fprintf(fid, 'DEPTH=%d;\n', N);
 fprintf(fid, 'WIDTH=%d;\n', word_len);
-fprintf(fid, 'ADDRESS_RADIX = UNS;\n'); 
-fprintf(fid, 'DATA_RADIX = HEX;\n'); 
+fprintf(fid, 'ADDRESS_RADIX = UNS;\n');
+fprintf(fid, 'DATA_RADIX = HEX;\n');
 fprintf(fid, 'CONTENT\t');
 fprintf(fid, 'BEGIN\n');
 for i = 0 : N-1

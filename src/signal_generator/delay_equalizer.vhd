@@ -9,12 +9,14 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity delay_equalizer is
-    port (clock : in std_logic;
-          reset : in std_logic;
-          frequency_control_in : in std_logic;
-          update_in : in std_logic;
-          frequency_control_out : out std_logic;
-          update_out : out std_logic);
+    port (
+        clock : in std_logic;
+        reset : in std_logic;
+        frequency_control_in : in std_logic;
+        update_in : in std_logic;
+        frequency_control_out : out std_logic;
+        update_out : out std_logic
+    );
 end delay_equalizer;
 
 architecture arch of delay_equalizer is

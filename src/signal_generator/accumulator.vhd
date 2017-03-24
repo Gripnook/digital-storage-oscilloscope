@@ -5,11 +5,13 @@ library ieee;
 use ieee.std_logic_1164.all;
 
 entity accumulator is
-    port (clock : in std_logic;
-          reset : in std_logic;
-          A : in std_logic;
-          Cin : in std_logic;
-          Cout : out std_logic);
+    port (
+        clock : in std_logic;
+        reset : in std_logic;
+        A : in std_logic;
+        Cin : in std_logic;
+        Cout : out std_logic
+    );
 end accumulator;
 
 architecture arch of accumulator is

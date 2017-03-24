@@ -1,22 +1,21 @@
 library ieee;
-library lpm;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use lpm.lpm_components.all;
 
 entity oscilloscope is
     generic (
-        ADC_DATA_WIDTH : integer := 12;
-        TEST_FREQUENCY_WIDTH : integer := 6
+        ADC_DATA_WIDTH : integer;
+        MAX_UPSAMPLE : integer
     );
     port (
         clock : in std_logic;
-        reset_n : in std_logic;
-        timebase : in std_logic_vector(2 downto 0);
-        trigger_up_n : in std_logic;
-        trigger_down_n : in std_logic;
+        reset : in std_logic;
+        horizontal_scale : in std_logic_vector(31 downto 0);
+        vertical_scale : in std_logic_vector(31 downto 0);
+        upsample : in integer range 0 to MAX_UPSAMPLE;
         trigger_type : in std_logic;
-        test_frequency : in std_logic_vector(TEST_FREQUENCY_WIDTH - 1 downto 0);
+        trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+        adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+        adc_en : in std_logic;
         pixel_clock : out std_logic;
         hsync, vsync : out std_logic;
         r, g, b : out std_logic_vector(7 downto 0)
@@ -24,15 +23,6 @@ entity oscilloscope is
 end oscilloscope;
 
 architecture arch of oscilloscope is
-
-    component analog_waveform_generator is
-        generic (N : integer);
-        port (clock : in std_logic;
-              reset : in std_logic;
-              update : in std_logic := '1';
-              frequency_control : in std_logic_vector(N-1 downto 0);
-              analog_waveform : out std_logic_vector(7 downto 0));
-    end component;
 
     component data_acquisition is
         generic (
@@ -83,14 +73,14 @@ architecture arch of oscilloscope is
             clock : in std_logic;
             reset : in std_logic;
             horizontal_scale : in std_logic_vector(31 downto 0);
-            vertical_scale : in std_logic_vector(31 downto 0) := x"00000200";
+            vertical_scale : in std_logic_vector(31 downto 0);
             trigger_type : in std_logic;
             trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             trigger_frequency : in std_logic_vector(31 downto 0);
-            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
-            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
-            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
-            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
+            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
+            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
+            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
+            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
             mem_bus_grant : in std_logic;
             mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             mem_bus_acquire : out std_logic;
@@ -125,25 +115,8 @@ architecture arch of oscilloscope is
     end component;
 
     constant ADDR_WIDTH : integer := 9;
-    constant MAX_UPSAMPLE : integer := 5;
-
-    signal reset : std_logic;
-
-    signal frequency_control : std_logic_vector(15 downto 0);
-    signal analog_waveform : std_logic_vector(7 downto 0);
-    signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-    signal adc_en : std_logic;
-    signal temp_cnt : integer range 0 to 99;
-
-    signal upsample : integer range 0 to MAX_UPSAMPLE;
-    signal horizontal_scale : std_logic_vector(31 downto 0);
 
     signal trigger : std_logic;
-    signal trigger_ref : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-    signal trigger_ref_up : std_logic;
-    signal trigger_ref_en : std_logic;
-    signal trigger_control : std_logic_vector(31 downto 0);
-    signal trigger_control_clr : std_logic;
     signal trigger_frequency : std_logic_vector(31 downto 0);
 
     signal write_bus_grant : std_logic;
@@ -160,55 +133,6 @@ architecture arch of oscilloscope is
     signal rgb : std_logic_vector(23 downto 0);
 
 begin
-
-    reset <= not reset_n;
-
-    arb_gen : analog_waveform_generator
-        generic map (N => 16)
-        port map (
-            clock => clock,
-            reset => reset,
-            frequency_control => frequency_control,
-            analog_waveform => analog_waveform
-        );
-    frequency_control(15 downto TEST_FREQUENCY_WIDTH + 4) <= (others => '0');
-    frequency_control(TEST_FREQUENCY_WIDTH + 3 downto 4) <= test_frequency;
-    frequency_control(3 downto 0) <= (others => '1'); -- min frequency
-
-    adc_processing : process (clock, reset)
-    begin
-        if (reset = '1') then
-            temp_cnt <= 0;
-            adc_data <= (others => '0');
-            adc_en <= '0';
-        elsif (rising_edge(clock)) then
-            adc_en <= '0';
-            if (temp_cnt = 99) then
-                temp_cnt <= 0;
-                adc_en <= '1';
-                adc_data <= analog_waveform & "0000";
-            else
-                temp_cnt <= temp_cnt + 1;
-            end if;
-        end if;
-    end process;
-
-    trigger_controls_counter : lpm_counter
-        generic map (LPM_WIDTH => 32)
-        port map (clock => clock, aclr => reset, sclr => trigger_control_clr, q => trigger_control);
-    trigger_control_clr <= '1' when trigger_control = std_logic_vector(to_unsigned(20000, 32)) else '0';
-
-    trigger_ref_counter : lpm_counter
-        generic map (LPM_WIDTH => ADC_DATA_WIDTH)
-        port map (
-            clock => clock,
-            aclr => reset,
-            updown => trigger_ref_up,
-            cnt_en => trigger_ref_en,
-            q => trigger_ref
-        );
-    trigger_ref_en <= trigger_control_clr and (trigger_up_n xor trigger_down_n);
-    trigger_ref_up <= not trigger_up_n;
 
     data_acquisition_subsystem : data_acquisition
         generic map (
@@ -229,12 +153,6 @@ begin
             write_en => write_en,
             write_data => write_data
         );
-    upsample <= to_integer(unsigned(timebase)) when to_integer(unsigned(timebase)) <= MAX_UPSAMPLE else MAX_UPSAMPLE;
-    process (upsample)
-    begin
-        horizontal_scale <= (others => '0');
-        horizontal_scale(7 - upsample) <= '1';
-    end process;
 
     triggering_subsystem : triggering
         generic map (
@@ -278,6 +196,7 @@ begin
             clock => clock,
             reset => reset,
             horizontal_scale => horizontal_scale,
+            vertical_scale => vertical_scale,
             trigger_type => trigger_type,
             trigger_level => trigger_ref,
             trigger_frequency => trigger_frequency,

@@ -9,11 +9,13 @@ architecture arch of pipelined_frequency_synthesizer_tb is
 
     component pipelined_frequency_synthesizer is
         generic (N : integer := 5);
-        port (clock : in std_logic;
-              reset : in std_logic;
-              update : in std_logic;
-              frequency_control : in std_logic_vector(N-1 downto 0);
-              frequency : out std_logic);
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            update : in std_logic;
+            frequency_control : in std_logic_vector(N-1 downto 0);
+            frequency : out std_logic
+        );
     end component;
 
     constant clock_period : time := 15.625 ns; -- 64 MHz
@@ -27,11 +29,13 @@ architecture arch of pipelined_frequency_synthesizer_tb is
 begin
 
     synthesizer : pipelined_frequency_synthesizer
-    port map (clock => clock,
-              reset => reset,
-              update => update,
-              frequency_control => frequency_control,
-              frequency => frequency);
+        port map (
+            clock => clock,
+            reset => reset,
+            update => update,
+            frequency_control => frequency_control,
+            frequency => frequency
+        );
 
     clock_process : process
     begin
@@ -43,7 +47,6 @@ begin
 
     test_process : process
     begin
-
         reset <= '1';
         wait for clock_period;
         reset <= '0';

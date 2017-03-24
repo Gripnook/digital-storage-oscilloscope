@@ -59,9 +59,6 @@ architecture arch of triggering is
     signal trigger_delayed2 : std_logic;
     signal trigger_period : std_logic_vector(31 downto 0);
     signal average_trigger_period : std_logic_vector(31 downto 0);
-    signal average_trigger_period1 : std_logic_vector(31 downto 0);
-    signal average_trigger_period2 : std_logic_vector(31 downto 0);
-    signal average_trigger_period3 : std_logic_vector(31 downto 0);
     signal trigger_frequency_internal : std_logic_vector(31 downto 0);
     signal trigger_division_done : std_logic;
 
@@ -103,8 +100,7 @@ begin
             q => trigger_period
         );
 
-    -- For frequencies of 1kHz or lower
-    averaging1 : running_average
+    averaging : running_average
         generic map (
             DATA_WIDTH => 32,
             POP_SIZE_WIDTH => 4
@@ -114,41 +110,8 @@ begin
             reset => reset,
             load => trigger_delayed,
             data_in => trigger_period,
-            average => average_trigger_period1
+            average => average_trigger_period
         );
-
-    -- For frequencies between 1kHz and 16kHz
-    averaging2 : running_average
-        generic map (
-            DATA_WIDTH => 32,
-            POP_SIZE_WIDTH => 6
-        )
-        port map (
-            clock => clock,
-            reset => reset,
-            load => trigger_delayed,
-            data_in => trigger_period,
-            average => average_trigger_period2
-        );
-
-    -- For frequencies greater than 16kHz
-    averaging3 : running_average
-        generic map (
-            DATA_WIDTH => 32,
-            POP_SIZE_WIDTH => 8
-        )
-        port map (
-            clock => clock,
-            reset => reset,
-            load => trigger_delayed,
-            data_in => trigger_period,
-            average => average_trigger_period3
-        );
-
-    average_trigger_period <=
-        average_trigger_period1 when unsigned(trigger_frequency_internal) <= x"00000400" else
-        average_trigger_period2 when unsigned(trigger_frequency_internal) <= x"00004000" else
-        average_trigger_period3;
 
     div : divider
         generic map (DATA_WIDTH => 32)
