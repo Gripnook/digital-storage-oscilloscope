@@ -120,8 +120,6 @@ begin
         frequency_control <= x"6666";
         wait for 200 us;
 
-        report "Done. Found " & integer'image(error_count) & " error(s).";
-
         wait;
     end process;
 
