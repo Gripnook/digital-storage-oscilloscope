@@ -2,6 +2,7 @@ library ieee;
 library std;
 use ieee.std_logic_1164.all;
 use ieee.std_logic_textio.all;
+use ieee.numeric_std.all;
 use std.textio.all;
 
 entity oscilloscope_tb is
@@ -17,9 +18,9 @@ architecture arch of oscilloscope_tb is
         port (
             clock : in std_logic;
             reset : in std_logic;
-            horizontal_scale : in std_logic_vector(31 downto 0) := x"00000080";
+            horizontal_scale : in std_logic_vector(31 downto 0);
             vertical_scale : in std_logic_vector(31 downto 0) := x"00000200";
-            upsample : in integer range 0 to MAX_UPSAMPLE := 0;
+            upsample : in integer range 0 to MAX_UPSAMPLE;
             trigger_type : in std_logic := '1';
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0) := x"800";
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
@@ -52,6 +53,9 @@ architecture arch of oscilloscope_tb is
     signal clock : std_logic;
     signal reset : std_logic;
 
+    signal horizontal_scale : std_logic_vector(31 downto 0);
+    signal upsample : integer range 0 to 5;
+
     signal adc_data : std_logic_vector(11 downto 0);
     signal adc_en : std_logic;
     signal adc_sample_count : integer range 0 to 99;
@@ -73,6 +77,8 @@ begin
         port map (
             clock => clock,
             reset => reset,
+            horizontal_scale => horizontal_scale,
+            upsample => upsample,
             adc_data => adc_data,
             adc_en => adc_en,
             pixel_clock => pixel_clock,
@@ -145,20 +151,28 @@ begin
         reset <= '0';
 
         -- 1 kHz
+        upsample <= 0;
+        horizontal_scale <= std_logic_vector(to_unsigned(128, 32));
         frequency_control <= x"0083";
-        wait for 40 ms;
+        wait for 14 ms;
+        wait for 14 ms;
 
         -- 10 kHz
+        upsample <= 2;
+        horizontal_scale <= std_logic_vector(to_unsigned(32, 32));
         frequency_control <= x"051F";
-        wait for 20 ms;
+        wait for 14 ms;
+        wait for 14 ms;
 
         -- 100 kHz
+        upsample <= 5;
+        horizontal_scale <= std_logic_vector(to_unsigned(4, 32));
         frequency_control <= x"3333";
-        wait for 10 ms;
+        wait for 14 ms;
 
         -- 200 kHz
         frequency_control <= x"6666";
-        wait for 10 ms;
+        wait for 14 ms;
 
         wait;
     end process;
