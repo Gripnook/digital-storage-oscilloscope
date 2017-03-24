@@ -12,3 +12,6 @@ c5_pin_model_dump.txt
 *.qpf
 *.qsf
 *.qws
+
+# too large
+oscilloscope_log.txt
