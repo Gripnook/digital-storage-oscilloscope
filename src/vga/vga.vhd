@@ -1,3 +1,9 @@
+-- A VGA driver module that converts a captured waveform and a set of measurements
+-- and settings to VGA signals that can be used to drive a video DAC. The measurements
+-- and settings are processed through BCD converters in order to be displayed in
+-- decimal encoding, and the waveform is vertically interpolated between samples in order
+-- to provide a continuous graph on the display.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
@@ -13,15 +19,15 @@ entity vga is
     port (
         clock : in std_logic;
         reset : in std_logic;
-        horizontal_scale : in std_logic_vector(31 downto 0);
-        vertical_scale : in std_logic_vector(31 downto 0);
-        trigger_type : in std_logic;
-        trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-        trigger_frequency : in std_logic_vector(31 downto 0);
-        voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-        voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-        voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-        voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
+        horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
+        vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
+        trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
+        trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+        trigger_frequency : in std_logic_vector(31 downto 0); -- Hz
+        voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+        voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+        voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+        voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
         mem_bus_grant : in std_logic;
         mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         mem_bus_acquire : out std_logic;

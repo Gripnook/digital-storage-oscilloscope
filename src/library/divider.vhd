@@ -1,4 +1,7 @@
--- An unsigned divider for numbers from 0 to 2 ** (DATA_WIDTH - 1) - 1.
+-- An unsigned divider for numbers from 0 to 2 ** (DATA_WIDTH - 1) - 1. The divider uses multiple
+-- clock cycles to perform its task. The inputs are read on the rising edge of the clock when the
+-- start signal is asserted, and completion is signaled through the done signal. The start signal
+-- must be deasserted following completion for the module to be reset.
 
 library ieee;
 library lpm;

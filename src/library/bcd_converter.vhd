@@ -1,3 +1,8 @@
+-- A converter between binary encoding and binary-coded decimal encoding. The converter uses
+-- multiple clock cycles to perform its task. The input is read on the rising edge of the
+-- clock when the start signal is asserted, and completion is signaled through the done signal.
+-- The start signal must be deasserted following completion for the module to be reset.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;

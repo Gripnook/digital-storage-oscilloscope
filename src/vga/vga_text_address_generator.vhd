@@ -1,3 +1,6 @@
+-- A module that converts the VGA row and column signals into a new coordinate system
+-- that separates the display area into text characters, and text characters into pixels.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

@@ -1,3 +1,5 @@
+-- A module that generates the current background pixel color to be displayed.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use work.vga_parameters.all;

@@ -33,10 +33,10 @@ architecture arch of digital_storage_oscilloscope is
         port (
             clock : in std_logic;
             reset : in std_logic;
-            horizontal_scale : in std_logic_vector(31 downto 0);
-            vertical_scale : in std_logic_vector(31 downto 0);
-            upsample : in integer range 0 to MAX_UPSAMPLE;
-            trigger_type : in std_logic;
+            horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
+            vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+            trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
             adc_en : in std_logic;

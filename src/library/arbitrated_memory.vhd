@@ -1,5 +1,11 @@
 -- A memory module which supports separate readers and writers on different buses.
--- It gives priority to writers when arbitrating the buses.
+-- It gives priority to writers when arbitrating the buses. To gain access to a bus,
+-- the bus acquire signal must be asserted until the arbiter grants the bus through
+-- the bus grant signal. Then, data can be read or written while keeping the bus acquire
+-- signal asserted. To release the bus, the bus acquire signal must be deasserted.
+-- 
+-- Note that the internal memory requires two cycles to perform read operations. The first
+-- cycles clocks in the address and the second cycle produces the data.
 
 library ieee;
 library lpm;

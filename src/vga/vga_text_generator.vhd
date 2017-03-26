@@ -1,3 +1,6 @@
+-- A module that generates the ASCII text character that should currently be displayed,
+-- along with the color it should be displayed in.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;

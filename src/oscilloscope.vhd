@@ -1,3 +1,8 @@
+-- A digital processing system that captures data sampled by an ADC and produces
+-- the VGA signals necessary to display it on a screen. To produce a stable waveform,
+-- it synchronizes the waveform capture to a trigger signal. It also outputs measurements
+-- and settings to the screen.
+
 library ieee;
 use ieee.std_logic_1164.all;
 
@@ -9,10 +14,10 @@ entity oscilloscope is
     port (
         clock : in std_logic;
         reset : in std_logic;
-        horizontal_scale : in std_logic_vector(31 downto 0);
-        vertical_scale : in std_logic_vector(31 downto 0);
-        upsample : in integer range 0 to MAX_UPSAMPLE;
-        trigger_type : in std_logic;
+        horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
+        vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
+        upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+        trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
         adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
         adc_en : in std_logic;
@@ -57,10 +62,10 @@ architecture arch of oscilloscope is
             clock : in std_logic;
             reset : in std_logic;
             adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-            trigger_type : in std_logic;
+            trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             trigger : out std_logic;
-            trigger_frequency : out std_logic_vector(31 downto 0)
+            trigger_frequency : out std_logic_vector(31 downto 0) -- Hz
         );
     end component;
 
@@ -72,15 +77,15 @@ architecture arch of oscilloscope is
         port (
             clock : in std_logic;
             reset : in std_logic;
-            horizontal_scale : in std_logic_vector(31 downto 0);
-            vertical_scale : in std_logic_vector(31 downto 0);
-            trigger_type : in std_logic;
-            trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
-            trigger_frequency : in std_logic_vector(31 downto 0);
-            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
-            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
-            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
-            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0');
+            horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
+            vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
+            trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
+            trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+            trigger_frequency : in std_logic_vector(31 downto 0); -- Hz
+            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
+            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
+            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
+            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
             mem_bus_grant : in std_logic;
             mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             mem_bus_acquire : out std_logic;

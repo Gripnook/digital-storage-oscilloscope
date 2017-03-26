@@ -1,3 +1,13 @@
+-- A module that acquires data sampled by an ADC and writes captured waveforms to an
+-- external memory block. In order to generate stable waveforms, the module waits for
+-- a trigger signal before it begins processing the data. It then saves data from
+-- before the trigger point and after the trigger point, such that the trigger
+-- signal always corresponds to the midpoint of the captured waveform.
+-- 
+-- The module also upsamples the waveform according to the specified upsampling rate.
+-- This corresponds to inserting zeros between sample points, and this can be used
+-- to interpolate the waveform at those points in a later processing step.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;

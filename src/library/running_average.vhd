@@ -1,4 +1,6 @@
--- Generates a running average for a population of 2 ** POP_SIZE_WIDTH
+-- Generates a running average for a population of 2 ** POP_SIZE_WIDTH. A new data point
+-- can be clocked in every cycle using the load enable input, and this will remove the
+-- oldest data point from the total to compute the new running average.
 
 library ieee;
 use ieee.std_logic_1164.all;

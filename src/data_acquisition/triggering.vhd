@@ -1,3 +1,11 @@
+-- A module that generates a trigger signal on the rising or falling edge of an input
+-- signal sampled by an ADC. Only rising or falling edges that cross a trigger reference
+-- level generate trigger signals.
+-- 
+-- The module also outputs the frequency at which the trigger occurs. In order to diminish
+-- the effect of trigger jitter on this measurement, a running average is used. The timing
+-- of the frequency updates is not specified.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
@@ -12,10 +20,10 @@ entity triggering is
         clock : in std_logic;
         reset : in std_logic;
         adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        trigger_type : in std_logic;
+        trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_ref : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         trigger : out std_logic;
-        trigger_frequency : out std_logic_vector(31 downto 0)
+        trigger_frequency : out std_logic_vector(31 downto 0) -- Hz
     );
 end triggering;
 
@@ -51,7 +59,7 @@ architecture arch of triggering is
         );
     end component;
 
-    constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32));
+    constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32)); -- Hz
     constant ONE : std_logic_vector(31 downto 0) := x"00000001";
 
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);

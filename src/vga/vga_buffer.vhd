@@ -1,3 +1,9 @@
+-- A video buffer module that gathers the waveform data to be displayed during the
+-- idle time between frames, as determined by the VSYNC signal. It outputs both the
+-- current data point being displayed and the next one in order to allow for vertical
+-- interpolation. If the next data point does not exist, the current data point is
+-- duplicated in the outputs.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;

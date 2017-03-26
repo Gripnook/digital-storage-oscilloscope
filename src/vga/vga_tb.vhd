@@ -17,15 +17,15 @@ architecture arch of vga_tb is
         port (
             clock : in std_logic;
             reset : in std_logic;
-            horizontal_scale : in std_logic_vector(31 downto 0) := x"00000080";
-            vertical_scale : in std_logic_vector(31 downto 0) := x"00000200";
-            trigger_type : in std_logic := '1';
-            trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"800";
-            trigger_frequency : in std_logic_vector(31 downto 0) := x"00001000";
-            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
-            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
-            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
-            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000";
+            horizontal_scale : in std_logic_vector(31 downto 0) := x"00000080"; -- us/div
+            vertical_scale : in std_logic_vector(31 downto 0) := x"00000200"; -- mV/div
+            trigger_type : in std_logic := '1'; -- '1' for rising edge, '0' for falling edge
+            trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"800"; -- mV
+            trigger_frequency : in std_logic_vector(31 downto 0) := x"00001000"; -- Hz
+            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000"; -- mV
+            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000"; -- mV
+            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000"; -- mV
+            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := x"000"; -- mV
             mem_bus_grant : in std_logic;
             mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             mem_bus_acquire : out std_logic;
