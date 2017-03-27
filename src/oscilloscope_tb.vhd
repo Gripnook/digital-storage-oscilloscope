@@ -48,7 +48,8 @@ architecture arch of oscilloscope_tb is
     constant space : string := " ";
     constant colon : string := ":";
 
-    constant clock_period : time := 20 ns;
+    constant clock_period  : time := 20 ns;
+    constant sample_period : time := 2 us;
 
     signal clock : std_logic;
     signal reset : std_logic;
@@ -58,7 +59,6 @@ architecture arch of oscilloscope_tb is
 
     signal adc_data : std_logic_vector(11 downto 0);
     signal adc_en : std_logic;
-    signal adc_sample_count : integer range 0 to 99;
 
     signal frequency_control : std_logic_vector(15 downto 0);
     signal analog_waveform : std_logic_vector(7 downto 0);
@@ -100,28 +100,20 @@ begin
 
     adc_data <= analog_waveform & "0000";
 
-    adc_processing : process (clock, reset)
-    begin
-        if (reset = '1') then
-            adc_sample_count <= 0;
-            adc_en <= '0';
-        elsif (rising_edge(clock)) then
-            adc_en <= '0';
-            if (adc_sample_count = 99) then
-                adc_sample_count <= 0;
-                adc_en <= '1';
-            else
-                adc_sample_count <= adc_sample_count + 1;
-            end if;
-        end if;
-    end process;
-
     clock_process : process
     begin
         clock <= '0';
         wait for clock_period / 2;
         clock <= '1';
         wait for clock_period / 2;
+    end process;
+
+    sampling_process : process
+    begin
+        adc_en <= '0';
+        wait for sample_period - clock_period;
+        adc_en <= '1';
+        wait for clock_period;
     end process;
 
     output_process : process (clock)

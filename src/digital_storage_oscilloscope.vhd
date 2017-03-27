@@ -125,6 +125,7 @@ begin
 
     adc_data <= analog_waveform & "0000";
 
+    -- TODO: Use the actual ADC
     adc_processing : process (clock, reset)
     begin
         if (reset = '1') then

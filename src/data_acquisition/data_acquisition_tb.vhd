@@ -166,7 +166,7 @@ begin
         wait for clock_period / 2;
     end process;
 
-    adc_en_process : process
+    sampling_process : process
     begin
         adc_en <= '0';
         wait for sample_period - clock_period;
