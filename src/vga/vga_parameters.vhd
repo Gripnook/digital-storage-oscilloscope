@@ -5,6 +5,10 @@ use ieee.math_real.all;
 
 package vga_parameters is
 
+    constant FRAME_RATE : integer := 72; -- Hz
+    constant DATA_UPDATE_RATE : integer := 4; -- Hz
+    constant CLOCK_RATE : integer := 50000000; -- Hz
+
     constant H_PIXELS : integer   := 800; -- horizontal display width in pixels
     constant H_PULSE  : integer   := 120; -- horizontal sync pulse width in pixels
     constant H_BP     : integer   := 56;  -- horizontal back porch width in pixels

@@ -139,6 +139,9 @@ architecture arch of vga is
 
     signal mem_bus_grant_delayed : std_logic;
     
+    signal frame_count : std_logic_vector(31 downto 0);
+    signal frame_count_en : std_logic;
+
     signal bcd_start : std_logic;
     signal horizontal_scale_bcd : std_logic_vector(15 downto 0);
     signal vertical_scale_bcd : std_logic_vector(15 downto 0);
@@ -213,7 +216,20 @@ begin
             data_2 => data_2
         );
 
-    bcd_start <= '1' when mem_bus_grant = '1' else '0';
+    frame_counter : lpm_counter
+        generic map (
+            LPM_WIDTH => 32,
+            LPM_MODULUS => FRAME_RATE / DATA_UPDATE_RATE
+        )
+        port map (
+            clock => clock,
+            aclr => reset,
+            cnt_en => frame_count_en,
+            q => frame_count
+        );
+    frame_count_en <= '1' when mem_bus_grant = '1' and mem_bus_grant_delayed /= mem_bus_grant else '0';
+
+    bcd_start <= '1' when frame_count_en = '1' and frame_count = x"00000000" else '0';
 
     hscale_bcd : bcd_converter
         generic map (DATA_WIDTH => 32, BCD_DIGITS => 4)
@@ -284,7 +300,7 @@ begin
         if (reset = '1') then
             trigger_level_internal <= (others => '0');
         elsif (rising_edge(clock)) then
-            if (mem_bus_grant = '1' and mem_bus_grant_delayed /= mem_bus_grant) then
+            if (frame_count_en = '1') then
                 trigger_level_internal <= trigger_level;
             end if;
         end if;
