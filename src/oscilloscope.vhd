@@ -62,6 +62,7 @@ architecture arch of oscilloscope is
             clock : in std_logic;
             reset : in std_logic;
             adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            adc_sample : in std_logic;
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             trigger : out std_logic;
@@ -167,6 +168,7 @@ begin
             clock => clock,
             reset => reset,
             adc_data => adc_data,
+            adc_sample => adc_sample,
             trigger_type => trigger_type,
             trigger_ref => trigger_ref,
             trigger => trigger,

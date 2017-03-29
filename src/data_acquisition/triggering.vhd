@@ -20,6 +20,7 @@ entity triggering is
         clock : in std_logic;
         reset : in std_logic;
         adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+        adc_sample : in std_logic;
         trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_ref : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         trigger : out std_logic;
@@ -62,6 +63,7 @@ architecture arch of triggering is
     constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32)); -- Hz
     constant ONE : std_logic_vector(31 downto 0) := x"00000001";
 
+    signal adc_data_internal : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
     signal trigger_delayed : std_logic;
@@ -72,25 +74,36 @@ architecture arch of triggering is
 
 begin
 
+    input_register : process (clock, reset)
+    begin
+        if (reset = '1') then
+            adc_data_internal <= (others => '0');
+        elsif (rising_edge(clock)) then
+            if (adc_sample = '1') then
+                adc_data_internal <= adc_data;
+            end if;
+        end if;
+    end process;
+
     delay_registers : process (clock, reset)
     begin
         if (reset = '1') then
             adc_data_delayed <= (others => '0');
             trigger_delayed <= '0';
         elsif (rising_edge(clock)) then
-            adc_data_delayed <= adc_data;
+            adc_data_delayed <= adc_data_internal;
             trigger_delayed <= trigger_internal;
         end if;
     end process;
 
-    trigger_comparator : process (trigger_type, trigger_ref, adc_data, adc_data_delayed)
+    trigger_comparator : process (trigger_type, trigger_ref, adc_data_internal, adc_data_delayed)
     begin
         -- default outputs
         trigger_internal <= '0';
 
-        if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
+        if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data_internal > trigger_ref) then
             trigger_internal <= '1';
-        elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data < trigger_ref) then
+        elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data_internal < trigger_ref) then
             trigger_internal <= '1';
         end if;
     end process;
@@ -110,7 +123,7 @@ begin
     averaging : running_average
         generic map (
             DATA_WIDTH => 32,
-            POP_SIZE_WIDTH => 4
+            POP_SIZE_WIDTH => 6
         )
         port map (
             clock => clock,

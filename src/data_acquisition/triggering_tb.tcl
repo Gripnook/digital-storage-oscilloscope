@@ -3,6 +3,7 @@ proc AddWaves {} {
     add wave -position end sim:/triggering_tb/clock
     add wave -position end sim:/triggering_tb/reset
     add wave -position end -radix unsigned sim:/triggering_tb/adc_data
+    add wave -position end -radix unsigned sim:/triggering_tb/adc_sample
     add wave -position end sim:/triggering_tb/trigger_type
     add wave -position end -radix unsigned sim:/triggering_tb/trigger_ref
     add wave -position end sim:/triggering_tb/trigger

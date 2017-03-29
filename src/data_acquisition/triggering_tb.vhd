@@ -15,6 +15,7 @@ architecture arch of triggering_tb is
             clock : in std_logic;
             reset : in std_logic;
             adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            adc_sample : in std_logic;
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             trigger : out std_logic;
@@ -33,20 +34,13 @@ architecture arch of triggering_tb is
         );
     end component;
 
-    procedure assert_equal(actual, expected : in std_logic_vector(15 downto 0); error_count : inout integer) is
-    begin
-        if (actual /= expected) then
-            error_count := error_count + 1;
-        end if;
-        assert (actual = expected) report "The data should be " & integer'image(to_integer(signed(expected))) & " but was " & integer'image(to_integer(signed(actual))) severity error;
-    end assert_equal;
-
     constant clock_period : time := 20 ns;
 
     signal clock : std_logic;
     signal reset : std_logic;
 
     signal adc_data : std_logic_vector(7 downto 0);
+    signal adc_sample : std_logic;
     signal trigger_type : std_logic;
     signal trigger_ref : std_logic_vector(7 downto 0);
     signal trigger : std_logic;
@@ -61,6 +55,7 @@ begin
             clock => clock,
             reset => reset,
             adc_data => adc_data,
+            adc_sample => adc_sample,
             trigger_type => trigger_type,
             trigger_ref => trigger_ref,
             trigger => trigger,
@@ -84,7 +79,6 @@ begin
     end process;
 
     test_process : process
-        variable error_count : integer := 0;
     begin
         reset <= '1';
         wait until rising_edge(clock);
@@ -93,6 +87,8 @@ begin
         trigger_ref <= x"80";
         
         trigger_type <= '1';
+
+        adc_sample <= '1';
 
         -- 10 kHz
         frequency_control <= x"051F";
