@@ -24,7 +24,7 @@ architecture arch of oscilloscope_tb is
             trigger_type : in std_logic := '1'; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0) := x"800";
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-            adc_en : in std_logic;
+            adc_sample : in std_logic;
             pixel_clock : out std_logic;
             hsync, vsync : out std_logic;
             r, g, b : out std_logic_vector(7 downto 0)
@@ -58,7 +58,7 @@ architecture arch of oscilloscope_tb is
     signal upsample : integer range 0 to 5;
 
     signal adc_data : std_logic_vector(11 downto 0);
-    signal adc_en : std_logic;
+    signal adc_sample : std_logic;
 
     signal frequency_control : std_logic_vector(15 downto 0);
     signal analog_waveform : std_logic_vector(7 downto 0);
@@ -80,7 +80,7 @@ begin
             horizontal_scale => horizontal_scale,
             upsample => upsample,
             adc_data => adc_data,
-            adc_en => adc_en,
+            adc_sample => adc_sample,
             pixel_clock => pixel_clock,
             hsync => hsync,
             vsync => vsync,
@@ -110,9 +110,9 @@ begin
 
     sampling_process : process
     begin
-        adc_en <= '0';
+        adc_sample <= '0';
         wait for sample_period - clock_period;
-        adc_en <= '1';
+        adc_sample <= '1';
         wait for clock_period;
     end process;
 

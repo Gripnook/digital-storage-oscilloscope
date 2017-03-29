@@ -18,7 +18,7 @@ architecture arch of data_acquisition_tb is
             reset : in std_logic;
             -- ADC
             adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-            adc_en : in std_logic;
+            adc_sample : in std_logic;
             -- trigger signal
             trigger : in std_logic;
             -- configuration
@@ -95,7 +95,7 @@ architecture arch of data_acquisition_tb is
     signal reset : std_logic;
 
     signal adc_data : std_logic_vector(7 downto 0);
-    signal adc_en : std_logic;
+    signal adc_sample : std_logic;
     signal upsample : integer range 0 to 5;
 
     signal write_bus_grant : std_logic;
@@ -118,7 +118,7 @@ begin
             clock => clock,
             reset => reset,
             adc_data => adc_data,
-            adc_en => adc_en,
+            adc_sample => adc_sample,
             trigger => trigger,
             upsample => upsample,
             write_bus_grant => write_bus_grant,
@@ -168,9 +168,9 @@ begin
 
     sampling_process : process
     begin
-        adc_en <= '0';
+        adc_sample <= '0';
         wait for sample_period - clock_period;
-        adc_en <= '1';
+        adc_sample <= '1';
         wait for clock_period;
     end process;
 

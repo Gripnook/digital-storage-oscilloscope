@@ -25,7 +25,7 @@ entity data_acquisition is
         reset : in std_logic;
         -- ADC
         adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-        adc_en : in std_logic;
+        adc_sample : in std_logic;
         -- trigger signal
         trigger : in std_logic;
         -- configuration
@@ -79,7 +79,7 @@ begin
             clock => clock,
             aclr => reset,
             q => adc_address,
-            cnt_en => adc_en
+            cnt_en => adc_sample
         );
 
     ram_address_counter : lpm_counter
@@ -103,11 +103,11 @@ begin
             address => address,
             inclock => clock,
             outclock => clock,
-            we => adc_en,
+            we => adc_sample,
             q => write_data_internal
         );
 
-    with adc_en select address <=
+    with adc_sample select address <=
         adc_address when '1',
         ram_address when others;
 
@@ -209,7 +209,7 @@ begin
             when RAM_READ_ADDR =>
                 if (data_written = '1') then
                     state <= IDLE;
-                elsif (adc_en = '1') then
+                elsif (adc_sample = '1') then
                     state <= RAM_READ_ADDR; -- we wait for the ADC write to complete
                 else
                     state <= RAM_READ_DATA;

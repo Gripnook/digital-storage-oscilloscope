@@ -3,7 +3,7 @@ proc AddWaves {} {
     add wave -position end sim:/data_acquisition_tb/clock
     add wave -position end sim:/data_acquisition_tb/reset
     add wave -position end -radix unsigned sim:/data_acquisition_tb/adc_data
-    add wave -position end sim:/data_acquisition_tb/adc_en
+    add wave -position end sim:/data_acquisition_tb/adc_sample
     add wave -position end sim:/data_acquisition_tb/trigger
     add wave -position end sim:/data_acquisition_tb/dut/state
 }

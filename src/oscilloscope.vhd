@@ -20,7 +20,7 @@ entity oscilloscope is
         trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
         adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-        adc_en : in std_logic;
+        adc_sample : in std_logic;
         pixel_clock : out std_logic;
         hsync, vsync : out std_logic;
         r, g, b : out std_logic_vector(7 downto 0)
@@ -40,7 +40,7 @@ architecture arch of oscilloscope is
             reset : in std_logic;
             -- ADC
             adc_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
-            adc_en : in std_logic;
+            adc_sample : in std_logic;
             -- trigger signal
             trigger : in std_logic;
             -- configuration
@@ -149,7 +149,7 @@ begin
             clock => clock,
             reset => reset,
             adc_data => adc_data,
-            adc_en => adc_en,
+            adc_sample => adc_sample,
             trigger => trigger,
             upsample => upsample,
             write_bus_grant => write_bus_grant,
