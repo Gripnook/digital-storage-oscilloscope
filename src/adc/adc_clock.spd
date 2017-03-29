@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<simPackage>
+ <file path="adc_clock_sim/adc_clock.vho" type="VHDL" />
+ <topLevel name="adc_clock" />
+ <deviceFamily name="cyclonev" />
+</simPackage>

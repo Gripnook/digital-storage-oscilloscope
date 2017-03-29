@@ -139,7 +139,7 @@ architecture arch of oscilloscope is
 
 begin
 
-    data_acquisition_subsystem : data_acquisition
+    data_acquisition_module : data_acquisition
         generic map (
             ADDR_WIDTH => ADDR_WIDTH,
             DATA_WIDTH => ADC_DATA_WIDTH,
@@ -159,7 +159,7 @@ begin
             write_data => write_data
         );
 
-    triggering_subsystem : triggering
+    triggering_module : triggering
         generic map (
             DATA_WIDTH => ADC_DATA_WIDTH
         )
@@ -192,7 +192,7 @@ begin
             read_data => read_data
         );
 
-    vga_subsystem : vga
+    vga_module : vga
         generic map (
             READ_ADDR_WIDTH => ADDR_WIDTH,
             READ_DATA_WIDTH => ADC_DATA_WIDTH

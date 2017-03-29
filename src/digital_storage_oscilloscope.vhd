@@ -16,7 +16,10 @@ entity digital_storage_oscilloscope is
         trigger_up_n : in std_logic;
         trigger_down_n : in std_logic;
         trigger_type : in std_logic;
-        test_frequency : in std_logic_vector(5 downto 0);
+        adc_sclk : out std_logic;
+        adc_din : out std_logic;
+        adc_dout : in std_logic;
+        adc_convst : out std_logic;
         pixel_clock : out std_logic;
         hsync, vsync : out std_logic;
         r, g, b : out std_logic_vector(7 downto 0)
@@ -46,21 +49,39 @@ architecture arch of digital_storage_oscilloscope is
         );
     end component;
 
-    component analog_waveform_generator is
-        generic (N : integer);
+    component adc_clock is
+        port (
+            refclk   : in  std_logic := '0'; -- refclk.clk
+            rst      : in  std_logic := '0'; -- reset.reset
+            outclk_0 : out std_logic         -- outclk0.clk
+        );
+    end component;
+
+    component adc_sampler is
+        generic (
+            ADC_DATA_WIDTH : integer := 12;
+            ADC_CONVST_PERIOD : integer := 80
+        );
         port (
             clock : in std_logic;
             reset : in std_logic;
-            update : in std_logic := '1';
-            frequency_control : in std_logic_vector(N-1 downto 0);
-            analog_waveform : out std_logic_vector(7 downto 0)
+            adc_sclk : out std_logic;
+            adc_din : out std_logic;
+            adc_dout : in std_logic;
+            adc_convst : out std_logic;
+            adc_sample : out std_logic;
+            adc_data : out std_logic_vector(ADC_DATA_WIDTH - 1 downto 0)
         );
     end component;
 
     signal reset : std_logic;
 
-    signal frequency_control : std_logic_vector(15 downto 0);
-    signal analog_waveform : std_logic_vector(7 downto 0);
+    signal adc_clk : std_logic;
+    signal adc_sample_clk1 : std_logic;
+    signal adc_sample_clk2 : std_logic;
+    signal adc_data_clk1 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal adc_data_clk2 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+
     signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal adc_sample : std_logic;
     signal adc_sample_count : integer range 0 to 99;
@@ -102,43 +123,47 @@ begin
             b => b
         );
 
-    sig_gen : analog_waveform_generator
-        generic map (N => 16)
+    adc_clk_pll : adc_clock
         port map (
-            clock => clock,
-            reset => reset,
-            frequency_control => frequency_control,
-            analog_waveform => analog_waveform
+            refclk => clock,
+            rst => reset,
+            outclk_0 => adc_clk
         );
 
-    frequency : process (test_frequency)
-    begin
-        frequency_control <= (others => '0');
-        frequency_control(14) <= test_frequency(5);
-        frequency_control(12) <= test_frequency(4);
-        frequency_control(10) <= test_frequency(3);
-        frequency_control(8) <= test_frequency(2);
-        frequency_control(6) <= test_frequency(1);
-        frequency_control(4) <= test_frequency(0);
-        frequency_control(2) <= '1';
-    end process;
+    adc_sampler_module : adc_sampler
+        generic map (
+            ADC_DATA_WIDTH => ADC_DATA_WIDTH
+        )
+        port map (
+            clock => adc_clk,
+            reset => reset,
+            adc_sclk => adc_sclk,
+            adc_din => adc_din,
+            adc_dout => adc_dout,
+            adc_convst => adc_convst,
+            adc_sample => adc_sample_clk1,
+            adc_data => adc_data_clk1
+        );
 
-    adc_data <= analog_waveform & "0000";
-
-    -- TODO: Use the actual ADC
-    adc_processing : process (clock, reset)
+    clock_domain1_reg : process (adc_clk, reset)
     begin
         if (reset = '1') then
-            adc_sample_count <= 0;
+            adc_sample_clk2 <= '0';
+            adc_data_clk2 <= (others => '0');
+        elsif (rising_edge(adc_clk)) then
+            adc_sample_clk2 <= adc_sample_clk1;
+            adc_data_clk2 <= adc_data_clk1;
+        end if;
+    end process;
+
+    clock_domain2_reg : process (clock, reset)
+    begin
+        if (reset = '1') then
             adc_sample <= '0';
+            adc_data <= (others => '0');
         elsif (rising_edge(clock)) then
-            adc_sample <= '0';
-            if (adc_sample_count = 99) then
-                adc_sample_count <= 0;
-                adc_sample <= '1';
-            else
-                adc_sample_count <= adc_sample_count + 1;
-            end if;
+            adc_sample <= adc_sample_clk2;
+            adc_data <= adc_data_clk2;
         end if;
     end process;
 
