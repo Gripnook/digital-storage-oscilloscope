@@ -40,7 +40,7 @@ architecture arch of triggering is
             divisor : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             start : in std_logic;
             quotient : out std_logic_vector(DATA_WIDTH - 1 downto 0);
-            remainder : out std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0'); -- unused
+            remainder : out std_logic_vector(DATA_WIDTH - 1 downto 0);
             done : out std_logic
         );
     end component;
@@ -129,6 +129,7 @@ begin
             divisor => average_trigger_period,
             start => trigger_delayed,
             quotient => trigger_frequency_internal,
+            remainder => open,
             done => trigger_division_done
         );
 

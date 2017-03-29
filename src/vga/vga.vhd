@@ -114,7 +114,7 @@ architecture arch of vga is
             binary : in std_logic_vector(DATA_WIDTH - 1 downto 0);
             start : in std_logic;
             bcd : out std_logic_vector(4 * BCD_DIGITS - 1 downto 0);
-            done : out std_logic := '0' -- unused
+            done : out std_logic
         );
     end component;
 
@@ -220,7 +220,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => horizontal_scale, start => bcd_start,
-            bcd => horizontal_scale_bcd
+            bcd => horizontal_scale_bcd, done => open
         );
 
     vscale_bcd : bcd_converter
@@ -228,7 +228,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => vertical_scale, start => bcd_start,
-            bcd => vertical_scale_bcd
+            bcd => vertical_scale_bcd, done => open
         );
 
     trig_freq_bcd : bcd_converter
@@ -236,7 +236,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => trigger_frequency, start => bcd_start,
-            bcd => trigger_frequency_bcd
+            bcd => trigger_frequency_bcd, done => open
         );
 
     trig_level_bcd : bcd_converter
@@ -244,7 +244,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => trigger_level, start => bcd_start,
-            bcd => trigger_level_bcd
+            bcd => trigger_level_bcd, done => open
         );
 
     vpp_bcd : bcd_converter
@@ -252,7 +252,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => voltage_pp, start => bcd_start,
-            bcd => voltage_pp_bcd
+            bcd => voltage_pp_bcd, done => open
         );
 
     vavg_bcd : bcd_converter
@@ -260,7 +260,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => voltage_avg, start => bcd_start,
-            bcd => voltage_avg_bcd
+            bcd => voltage_avg_bcd, done => open
         );
 
     vmax_bcd : bcd_converter
@@ -268,7 +268,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => voltage_max, start => bcd_start,
-            bcd => voltage_max_bcd
+            bcd => voltage_max_bcd, done => open
         );
 
     vmin_bcd : bcd_converter
@@ -276,7 +276,7 @@ begin
         port map (
             clock => clock, reset => reset,
             binary => voltage_min, start => bcd_start,
-            bcd => voltage_min_bcd
+            bcd => voltage_min_bcd, done => open
         );
 
     trigger_level_register : process (clock, reset)
