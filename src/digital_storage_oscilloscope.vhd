@@ -60,7 +60,7 @@ architecture arch of digital_storage_oscilloscope is
     component adc_sampler is
         generic (
             ADC_DATA_WIDTH : integer := 12;
-            ADC_CONVST_PERIOD : integer := 80
+            ADC_SAMPLE_PERIOD : integer := 80 -- 2 us in clock cycles
         );
         port (
             clock : in std_logic;
@@ -84,7 +84,6 @@ architecture arch of digital_storage_oscilloscope is
 
     signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal adc_sample : std_logic;
-    signal adc_sample_count : integer range 0 to 99;
 
     signal horizontal_scale : std_logic_vector(31 downto 0);
     signal vertical_scale : std_logic_vector(31 downto 0) := x"00000200";

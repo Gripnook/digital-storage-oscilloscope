@@ -10,7 +10,7 @@ architecture arch of adc_sampler_tb is
     component adc_sampler is
         generic (
             ADC_DATA_WIDTH : integer := 12;
-            ADC_CONVST_PERIOD : integer := 80
+            ADC_SAMPLE_PERIOD : integer := 80 -- 2 us in clock cycles
         );
         port (
             clock : in std_logic;
@@ -82,8 +82,9 @@ begin
 
         assert_equal(adc_data, x"FFF", error_count);
 
+        wait until rising_edge(adc_sclk);
         adc_dout <= '1';
-        wait until falling_edge(adc_convst);
+        wait for clock_period;
         adc_dout <= '0';
         wait for clock_period;
         adc_dout <= '0';
