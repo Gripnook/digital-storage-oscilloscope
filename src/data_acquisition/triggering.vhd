@@ -63,7 +63,7 @@ architecture arch of triggering is
     constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32)); -- Hz
     constant ONE : std_logic_vector(31 downto 0) := x"00000001";
 
-    constant AUTO_TRIGGER_PERIOD : integer := 694444; -- 72 Hz
+    constant AUTO_TRIGGER_PERIOD : integer := 1388889; -- 36 Hz
 
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
