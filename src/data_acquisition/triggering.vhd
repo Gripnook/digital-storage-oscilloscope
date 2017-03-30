@@ -63,7 +63,6 @@ architecture arch of triggering is
     constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32)); -- Hz
     constant ONE : std_logic_vector(31 downto 0) := x"00000001";
 
-    signal adc_data_internal : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
     signal trigger_delayed : std_logic;
@@ -74,37 +73,30 @@ architecture arch of triggering is
 
 begin
 
-    input_register : process (clock, reset)
-    begin
-        if (reset = '1') then
-            adc_data_internal <= (others => '0');
-        elsif (rising_edge(clock)) then
-            if (adc_sample = '1') then
-                adc_data_internal <= adc_data;
-            end if;
-        end if;
-    end process;
-
     delay_registers : process (clock, reset)
     begin
         if (reset = '1') then
             adc_data_delayed <= (others => '0');
             trigger_delayed <= '0';
         elsif (rising_edge(clock)) then
-            adc_data_delayed <= adc_data_internal;
+            if (adc_sample = '1') then
+                adc_data_delayed <= adc_data;
+            end if;
             trigger_delayed <= trigger_internal;
         end if;
     end process;
 
-    trigger_comparator : process (trigger_type, trigger_ref, adc_data_internal, adc_data_delayed)
+    trigger_comparator : process (adc_sample, trigger_type, trigger_ref, adc_data, adc_data_delayed)
     begin
         -- default outputs
         trigger_internal <= '0';
 
-        if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data_internal > trigger_ref) then
-            trigger_internal <= '1';
-        elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data_internal < trigger_ref) then
-            trigger_internal <= '1';
+        if (adc_sample = '1') then
+            if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
+                trigger_internal <= '1';
+            elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data < trigger_ref) then
+                trigger_internal <= '1';
+            end if;
         end if;
     end process;
 
