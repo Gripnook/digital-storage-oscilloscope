@@ -21,8 +21,8 @@ entity sinc_interpolation is
         read_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
         read_bus_acquire : out std_logic;
         read_address : out std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
-        -- up-sampling rate
-        upsample : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
+        -- up-sampling rate, gave 3 bits signal because we have 6 upsampling modes.
+        upsample : in std_logic_vector(2 downto 0);
         -- write bus
         write_bus_grant : in std_logic;
         write_bus_acquire : out std_logic;
@@ -37,15 +37,15 @@ architecture arch of sinc_interpolation is
     constant WRITE_ADDR_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(WRITE_ADDR_WIDTH))));
     type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE_ADDR, SINC_WRITE_DATA, SINC_DONE);
     signal state : state_type := READ_BUS_REQ;
-    type memory is array(0 to WRITE_ADDR_WIDTH - 1) of integer range 0 to WRITE_DATA_WIDTH - 1;
+    type memory is array(0 to WRITE_ADDR_WIDTH - 1) of std_logic_vector range 0 to WRITE_DATA_WIDTH - 1;
     signal mem : memory;
     signal writein_en : std_logic;
     signal read_addr_sel : std_logic;
     signal write_addr_sel : std_logic;
-    signal readin_address : integer range 0 to READ_ADDR_WIDTH - 1; 
-    signal writein_address : integer range 0 to WRITE_ADDR_WIDTH - 1; 
+    signal readin_address : std_logic_vector range 0 to READ_ADDR_WIDTH - 1; 
+    signal writein_address : std_logic_vector range 0 to WRITE_ADDR_WIDTH - 1; 
     signal count_internal : std_logic_vector(WRITE_ADDR_WIDTH_BIT_LENGTH - 1 downto 0);
-    signal count : integer range 0 to WRITE_ADDR_WIDTH - 1;
+    signal count : std_logic_vector range 0 to WRITE_ADDR_WIDTH - 1;
     signal count_en : std_logic;
     signal count_clr : std_logic;
 
