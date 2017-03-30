@@ -63,6 +63,8 @@ architecture arch of triggering is
     constant CLOCK_RATE : std_logic_vector(31 downto 0) := std_logic_vector(to_unsigned(50000000, 32)); -- Hz
     constant ONE : std_logic_vector(31 downto 0) := x"00000001";
 
+    constant AUTO_TRIGGER_PERIOD : integer := 694444; -- 72 Hz
+
     signal adc_data_delayed : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal trigger_internal : std_logic;
     signal trigger_delayed : std_logic;
@@ -86,13 +88,15 @@ begin
         end if;
     end process;
 
-    trigger_comparator : process (adc_sample, trigger_type, trigger_ref, adc_data, adc_data_delayed)
+    trigger_comparator : process (adc_sample, trigger_type, trigger_ref, adc_data, adc_data_delayed, trigger_period)
     begin
         -- default outputs
         trigger_internal <= '0';
 
         if (adc_sample = '1') then
-            if (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
+            if (unsigned(trigger_period) >= AUTO_TRIGGER_PERIOD) then
+                trigger_internal <= '1'; -- auto trigger
+            elsif (trigger_type = '1' and adc_data_delayed <= trigger_ref and adc_data > trigger_ref) then
                 trigger_internal <= '1';
             elsif (trigger_type = '0' and adc_data_delayed >= trigger_ref and adc_data < trigger_ref) then
                 trigger_internal <= '1';
