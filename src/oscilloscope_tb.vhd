@@ -13,14 +13,16 @@ architecture arch of oscilloscope_tb is
     component oscilloscope is
         generic (
             ADC_DATA_WIDTH : integer := 12;
-            MAX_UPSAMPLE : integer := 5
+            MAX_UPSAMPLE : integer := 5;
+            MAX_DOWNSAMPLE : integer := 2
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
             horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
             vertical_scale : in std_logic_vector(31 downto 0) := x"00000200"; -- mV/div
-            upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+            downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
             trigger_type : in std_logic := '1'; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0) := x"800";
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
@@ -56,6 +58,7 @@ architecture arch of oscilloscope_tb is
 
     signal horizontal_scale : std_logic_vector(31 downto 0);
     signal upsample : integer range 0 to 5;
+    signal downsample : integer range 0 to 2;
 
     signal adc_data : std_logic_vector(11 downto 0);
     signal adc_sample : std_logic;
@@ -79,6 +82,7 @@ begin
             reset => reset,
             horizontal_scale => horizontal_scale,
             upsample => upsample,
+            downsample => downsample,
             adc_data => adc_data,
             adc_sample => adc_sample,
             pixel_clock => pixel_clock,
@@ -144,6 +148,7 @@ begin
 
         -- 1 kHz
         upsample <= 0;
+        downsample <= 1;
         horizontal_scale <= std_logic_vector(to_unsigned(128, 32));
         frequency_control <= x"0083";
         wait for 14 ms;
@@ -151,6 +156,7 @@ begin
 
         -- 10 kHz
         upsample <= 2;
+        downsample <= 0;
         horizontal_scale <= std_logic_vector(to_unsigned(32, 32));
         frequency_control <= x"051F";
         wait for 14 ms;

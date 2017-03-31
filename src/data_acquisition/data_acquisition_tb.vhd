@@ -11,7 +11,8 @@ architecture arch of data_acquisition_tb is
         generic (
             ADDR_WIDTH : integer := 4;
             DATA_WIDTH : integer := 8;
-            MAX_UPSAMPLE : integer := 5
+            MAX_UPSAMPLE : integer := 5;
+            MAX_DOWNSAMPLE : integer := 2
         );
         port (
             clock : in std_logic;
@@ -22,7 +23,8 @@ architecture arch of data_acquisition_tb is
             -- trigger signal
             trigger : in std_logic;
             -- configuration
-            upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+            downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
             -- write bus
             write_bus_grant : in std_logic;
             write_bus_acquire : out std_logic;
@@ -98,6 +100,7 @@ architecture arch of data_acquisition_tb is
     signal adc_data : std_logic_vector(7 downto 0);
     signal adc_sample : std_logic;
     signal upsample : integer range 0 to 5;
+    signal downsample : integer range 0 to 2;
 
     signal write_bus_grant : std_logic;
     signal write_bus_acquire : std_logic;
@@ -122,6 +125,7 @@ begin
             adc_sample => adc_sample,
             trigger => trigger,
             upsample => upsample,
+            downsample => downsample,
             write_bus_grant => write_bus_grant,
             write_bus_acquire => write_bus_acquire,
             write_address => write_address,
@@ -184,6 +188,7 @@ begin
         reset <= '0';
 
         upsample <= 0;
+        downsample <= 0;
         trigger_ref <= x"80";
         trigger_type <= '1';
 

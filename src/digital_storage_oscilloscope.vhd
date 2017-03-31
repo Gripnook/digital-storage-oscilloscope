@@ -7,7 +7,8 @@ use lpm.lpm_components.all;
 entity digital_storage_oscilloscope is
     generic (
         ADC_DATA_WIDTH : integer := 12;
-        MAX_UPSAMPLE : integer := 5
+        MAX_UPSAMPLE : integer := 5;
+        MAX_DOWNSAMPLE : integer := 2
     );
     port (
         clock : in std_logic;
@@ -31,14 +32,16 @@ architecture arch of digital_storage_oscilloscope is
     component oscilloscope is
         generic (
             ADC_DATA_WIDTH : integer;
-            MAX_UPSAMPLE : integer
+            MAX_UPSAMPLE : integer;
+            MAX_DOWNSAMPLE : integer
         );
         port (
             clock : in std_logic;
             reset : in std_logic;
             horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
             vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
-            upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+            downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
@@ -111,6 +114,7 @@ architecture arch of digital_storage_oscilloscope is
     signal horizontal_scale : std_logic_vector(31 downto 0);
     signal vertical_scale : std_logic_vector(31 downto 0) := x"00000200";
     signal upsample : integer range 0 to MAX_UPSAMPLE;
+    signal downsample : integer range 0 to MAX_DOWNSAMPLE;
     
     signal trigger_ref : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal trigger_ref_up : std_logic;
@@ -147,7 +151,8 @@ begin
     scope : oscilloscope
         generic map (
             ADC_DATA_WIDTH => ADC_DATA_WIDTH,
-            MAX_UPSAMPLE => MAX_UPSAMPLE
+            MAX_UPSAMPLE => MAX_UPSAMPLE,
+            MAX_DOWNSAMPLE => MAX_DOWNSAMPLE
         )
         port map (
             clock => clock,
@@ -155,6 +160,7 @@ begin
             horizontal_scale => horizontal_scale,
             vertical_scale => vertical_scale,
             upsample => upsample,
+            downsample => downsample,
             trigger_type => trigger_type,
             trigger_ref => trigger_ref,
             adc_data => adc_data,
@@ -215,11 +221,49 @@ begin
         end if;
     end process;
 
-    upsample <= to_integer(unsigned(timebase)) when to_integer(unsigned(timebase)) <= MAX_UPSAMPLE else MAX_UPSAMPLE;
-    process (upsample)
+    horizontal_configuration : process (timebase)
     begin
+        -- default outputs
         horizontal_scale <= (others => '0');
-        horizontal_scale(7 - upsample) <= '1';
+        upsample <= 0;
+        downsample <= 0;
+        
+        case timebase is
+        when "000" =>
+            horizontal_scale <= x"00000004";
+            upsample <= 5;
+            downsample <= 0;
+        when "001" =>
+            horizontal_scale <= x"00000008";
+            upsample <= 4;
+            downsample <= 0;
+        when "010" =>
+            horizontal_scale <= x"00000010";
+            upsample <= 3;
+            downsample <= 0;
+        when "011" =>
+            horizontal_scale <= x"00000020";
+            upsample <= 2;
+            downsample <= 0;
+        when "100" =>
+            horizontal_scale <= x"00000040";
+            upsample <= 1;
+            downsample <= 0;
+        when "101" =>
+            horizontal_scale <= x"00000080";
+            upsample <= 0;
+            downsample <= 0;
+        when "110" =>
+            horizontal_scale <= x"00000100";
+            upsample <= 0;
+            downsample <= 1;
+        when "111" =>
+            horizontal_scale <= x"00000200";
+            upsample <= 0;
+            downsample <= 2;
+        when others =>
+            null;
+        end case;
     end process;
 
     trigger_controls_counter : lpm_counter

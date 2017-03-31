@@ -9,14 +9,16 @@ use ieee.std_logic_1164.all;
 entity oscilloscope is
     generic (
         ADC_DATA_WIDTH : integer;
-        MAX_UPSAMPLE : integer
+        MAX_UPSAMPLE : integer;
+        MAX_DOWNSAMPLE : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
         horizontal_scale : in std_logic_vector(31 downto 0); -- us/div
         vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
-        upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+        upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+        downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
         trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
         trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
         adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
@@ -33,7 +35,8 @@ architecture arch of oscilloscope is
         generic (
             ADDR_WIDTH : integer;
             DATA_WIDTH : integer;
-            MAX_UPSAMPLE : integer
+            MAX_UPSAMPLE : integer;
+            MAX_DOWNSAMPLE : integer
         );
         port (
             clock : in std_logic;
@@ -44,7 +47,8 @@ architecture arch of oscilloscope is
             -- trigger signal
             trigger : in std_logic;
             -- configuration
-            upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+            downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
             -- write bus
             write_bus_grant : in std_logic;
             write_bus_acquire : out std_logic;
@@ -144,7 +148,8 @@ begin
         generic map (
             ADDR_WIDTH => ADDR_WIDTH,
             DATA_WIDTH => ADC_DATA_WIDTH,
-            MAX_UPSAMPLE => MAX_UPSAMPLE
+            MAX_UPSAMPLE => MAX_UPSAMPLE,
+            MAX_DOWNSAMPLE => MAX_DOWNSAMPLE
         )
         port map (
             clock => clock,
@@ -153,6 +158,7 @@ begin
             adc_sample => adc_sample,
             trigger => trigger,
             upsample => upsample,
+            downsample => downsample,
             write_bus_grant => write_bus_grant,
             write_bus_acquire => write_bus_acquire,
             write_address => write_address,

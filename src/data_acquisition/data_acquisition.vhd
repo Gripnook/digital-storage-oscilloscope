@@ -7,6 +7,9 @@
 -- The module also upsamples the waveform according to the specified upsampling rate.
 -- This corresponds to inserting zeros between sample points, and this can be used
 -- to interpolate the waveform at those points in a later processing step.
+-- 
+-- The module can also downsample the waveform according to the specified downsampling
+-- rate. This corresponds to skipping over sample points to "zoom out" of the waveform.
 
 library ieee;
 library lpm;
@@ -18,7 +21,8 @@ entity data_acquisition is
     generic (
         ADDR_WIDTH : integer;
         DATA_WIDTH : integer;
-        MAX_UPSAMPLE : integer
+        MAX_UPSAMPLE : integer;
+        MAX_DOWNSAMPLE : integer
     );
     port (
         clock : in std_logic;
@@ -29,7 +33,8 @@ entity data_acquisition is
         -- trigger signal
         trigger : in std_logic;
         -- configuration
-        upsample : in integer range 0 to MAX_UPSAMPLE; -- up-sampling rate is 2 ** upsample
+        upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+        downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
         -- write bus
         write_bus_grant : in std_logic;
         write_bus_acquire : out std_logic;
@@ -44,7 +49,7 @@ architecture arch of data_acquisition is
     type state_type is (IDLE, TRIGGERED, BUS_WAIT, RAM_READ_ADDR, RAM_READ_DATA, BUS_WRITE);
     signal state : state_type := IDLE;
 
-    constant RAM_ADDR_WIDTH : integer := ADDR_WIDTH + 1; -- we store twice the data to be able to continuously sample
+    constant RAM_ADDR_WIDTH : integer := ADDR_WIDTH + 3; -- we store eight times the data to be able to continuously sample
 
     signal adc_address : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);
     signal ram_address : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);
@@ -62,6 +67,9 @@ architecture arch of data_acquisition is
     signal upsample_cnt_en, upsample_cnt_clr : std_logic;
     signal upsample_off : std_logic;
     signal upsample_done : std_logic;
+
+    signal downsample_internal : integer range 0 to MAX_DOWNSAMPLE;
+    signal downsampling_rate : std_logic_vector(MAX_DOWNSAMPLE downto 0);
 
     signal trigger_interval : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);
     signal trigger_start_address : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);
@@ -82,16 +90,18 @@ begin
             cnt_en => adc_sample
         );
 
-    ram_address_counter : lpm_counter
-        generic map (LPM_WIDTH => RAM_ADDR_WIDTH)
-        port map (
-            clock => clock,
-            aclr => reset,
-            data => trigger_start_address,
-            sload => ram_address_load,
-            q => ram_address,
-            cnt_en => ram_address_en
-        );
+    ram_address_counter : process (clock, reset)
+    begin
+        if (reset = '1') then
+            ram_address <= (others => '0');
+        elsif (rising_edge(clock)) then
+            if (ram_address_load = '1') then
+                ram_address <= trigger_start_address;
+            elsif (ram_address_en = '1') then
+                ram_address <= std_logic_vector(unsigned(ram_address) + unsigned(downsampling_rate));
+            end if;
+        end if;
+    end process;
 
     mem : lpm_ram_dq
         generic map (
@@ -139,16 +149,18 @@ begin
     begin
         if (reset = '1') then
             upsample_internal <= 0;
+            downsample_internal <= 0;
             trigger_address <= (others => '0');
         elsif (rising_edge(clock)) then
             if (input_reg_en = '1') then
                 upsample_internal <= upsample;
+                downsample_internal <= downsample;
                 trigger_address <= adc_address;
             end if;
         end if;
     end process;
 
-    process (upsample_internal)
+    upsample_conversion : process (upsample_internal)
         variable upsample_upper_bound : std_logic_vector(MAX_UPSAMPLE downto 0);
     begin
         upsample_upper_bound := (others => '0');
@@ -158,12 +170,18 @@ begin
         upsample_ceil <= upsample_upper_bound(MAX_UPSAMPLE - 1 downto 0);
     end process;
 
+    downsample_conversion : process (downsample_internal)
+    begin
+        downsampling_rate <= (others => '0');
+        downsampling_rate(downsample_internal) <= '1';
+    end process;
+
     upsample_done <= '1' when upsample_count = upsample_ceil else '0';
 
-    process (upsample_internal)
+    trigger_interval_calculation : process (upsample_internal, downsample_internal)
     begin
         trigger_interval <= (others => '0');
-        trigger_interval(ADDR_WIDTH - upsample_internal) <= '1';
+        trigger_interval(ADDR_WIDTH - upsample_internal + downsample_internal) <= '1';
     end process;
 
     trigger_start_address <= std_logic_vector(unsigned(trigger_address) - unsigned(trigger_interval(RAM_ADDR_WIDTH - 1 downto 1)));
