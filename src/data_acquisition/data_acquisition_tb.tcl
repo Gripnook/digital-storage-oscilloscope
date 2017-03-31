@@ -17,7 +17,7 @@ vcom signal_generator/bit_slice.vhd
 vcom signal_generator/pipelined_frequency_synthesizer.vhd
 vcom signal_generator/analog_waveform_generator.vhd
 vcom library/arbitrated_memory.vhd
-vcom data_acquisition/triggering.vhd
+vcom triggering/triggering.vhd
 vcom data_acquisition/data_acquisition.vhd
 vcom data_acquisition/data_acquisition_tb.vhd
 

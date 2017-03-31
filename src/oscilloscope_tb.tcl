@@ -29,7 +29,7 @@ vcom vga/vga_rom.vhd
 vcom vga/vga_timing_generator.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
-vcom data_acquisition/triggering.vhd
+vcom triggering/triggering.vhd
 vcom data_acquisition/data_acquisition.vhd
 vcom oscilloscope.vhd
 vcom oscilloscope_tb.vhd

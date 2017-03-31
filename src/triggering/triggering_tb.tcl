@@ -18,8 +18,8 @@ vcom signal_generator/accumulator.vhd
 vcom signal_generator/bit_slice.vhd
 vcom signal_generator/pipelined_frequency_synthesizer.vhd
 vcom signal_generator/analog_waveform_generator.vhd
-vcom data_acquisition/triggering.vhd
-vcom data_acquisition/triggering_tb.vhd
+vcom triggering/triggering.vhd
+vcom triggering/triggering_tb.vhd
 
 # Start simulation
 vsim -t ns triggering_tb
