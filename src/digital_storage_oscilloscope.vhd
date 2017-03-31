@@ -74,16 +74,39 @@ architecture arch of digital_storage_oscilloscope is
         );
     end component;
 
+    component fifo is
+        port (
+            aclr : in std_logic := '0';
+            data : in std_logic_vector(11 downto 0);
+            rdclk : in std_logic;
+            rdreq : in std_logic;
+            wrclk : in std_logic;
+            wrreq : in std_logic;
+            q : out std_logic_vector(11 downto 0);
+            rdempty : out std_logic;
+            wrfull : out std_logic
+        );
+    end component;
+
     signal reset : std_logic;
+    signal reset_clk1 : std_logic;
+    signal reset_clk1_temp : std_logic;
+    signal reset_clk2 : std_logic;
+    signal reset_clk2_temp : std_logic;
 
     signal adc_clk : std_logic;
-    signal adc_sample_clk1 : std_logic;
-    signal adc_sample_clk2 : std_logic;
-    signal adc_data_clk1 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-    signal adc_data_clk2 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
 
     signal adc_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
-    signal adc_sample : std_logic;
+    signal adc_sample_clk1 : std_logic;
+    signal adc_sample_clk2 : std_logic;
+
+    signal fifo_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal fifo_rdreq : std_logic;
+    signal fifo_wrreq : std_logic;
+    signal fifo_rdempty : std_logic;
+    signal fifo_rdempty_delayed : std_logic;
+    signal fifo_rdempty_n : std_logic;
+    signal fifo_wrfull : std_logic;
 
     signal horizontal_scale : std_logic_vector(31 downto 0);
     signal vertical_scale : std_logic_vector(31 downto 0) := x"00000200";
@@ -99,6 +122,28 @@ begin
     
     reset <= not reset_n;
 
+    reset_synchronization_clk1 : process (adc_clk, reset_n)
+    begin
+        if (reset_n = '0') then
+            reset_clk1_temp <= '1';
+            reset_clk1 <= '1';
+        elsif (rising_edge(adc_clk)) then
+            reset_clk1_temp <= '0';
+            reset_clk1 <= reset_clk1_temp;
+        end if;
+    end process;
+
+    reset_synchronization_clk2 : process (clock, reset_n)
+    begin
+        if (reset_n = '0') then
+            reset_clk2_temp <= '1';
+            reset_clk2 <= '1';
+        elsif (rising_edge(clock)) then
+            reset_clk2_temp <= '0';
+            reset_clk2 <= reset_clk2_temp;
+        end if;
+    end process;
+
     scope : oscilloscope
         generic map (
             ADC_DATA_WIDTH => ADC_DATA_WIDTH,
@@ -106,14 +151,14 @@ begin
         )
         port map (
             clock => clock,
-            reset => reset,
+            reset => reset_clk2,
             horizontal_scale => horizontal_scale,
             vertical_scale => vertical_scale,
             upsample => upsample,
             trigger_type => trigger_type,
             trigger_ref => trigger_ref,
             adc_data => adc_data,
-            adc_sample => adc_sample,
+            adc_sample => adc_sample_clk2,
             pixel_clock => pixel_clock,
             hsync => hsync,
             vsync => vsync,
@@ -125,7 +170,7 @@ begin
     adc_clk_pll : adc_clock
         port map (
             refclk => clock,
-            rst => reset,
+            rst => reset_clk2,
             outclk_0 => adc_clk
         );
 
@@ -135,34 +180,38 @@ begin
         )
         port map (
             clock => adc_clk,
-            reset => reset,
+            reset => reset_clk1,
             adc_sclk => adc_sclk,
             adc_din => adc_din,
             adc_dout => adc_dout,
             adc_convst => adc_convst,
             adc_sample => adc_sample_clk1,
-            adc_data => adc_data_clk1
+            adc_data => fifo_data
         );
 
-    clock_domain1_reg : process (adc_clk, reset)
-    begin
-        if (reset = '1') then
-            adc_sample_clk2 <= '0';
-            adc_data_clk2 <= (others => '0');
-        elsif (rising_edge(adc_clk)) then
-            adc_sample_clk2 <= adc_sample_clk1;
-            adc_data_clk2 <= adc_data_clk1;
-        end if;
-    end process;
+    clock_domain_crossing : fifo
+        port map (
+            aclr => reset,
+            data => fifo_data,
+            rdclk => clock,
+            rdreq => fifo_rdempty_n,
+            wrclk => adc_clk,
+            wrreq => fifo_wrreq,
+            q => adc_data,
+            rdempty => fifo_rdempty,
+            wrfull => fifo_wrfull
+        );
 
-    clock_domain2_reg : process (clock, reset)
+    fifo_rdempty_n <= not fifo_rdempty;
+    fifo_wrreq <= adc_sample_clk1 and (not fifo_wrfull);
+    adc_sample_clk2 <= fifo_rdempty and (not fifo_rdempty_delayed);
+
+    delay_register : process (clock, reset_clk2)
     begin
-        if (reset = '1') then
-            adc_sample <= '0';
-            adc_data <= (others => '0');
+        if (reset_clk2 = '1') then
+            fifo_rdempty_delayed <= '0';
         elsif (rising_edge(clock)) then
-            adc_sample <= adc_sample_clk2;
-            adc_data <= adc_data_clk2;
+            fifo_rdempty_delayed <= fifo_rdempty;
         end if;
     end process;
 
@@ -175,14 +224,14 @@ begin
 
     trigger_controls_counter : lpm_counter
         generic map (LPM_WIDTH => 32)
-        port map (clock => clock, aclr => reset, sclr => trigger_control_clr, q => trigger_control);
+        port map (clock => clock, aclr => reset_clk2, sclr => trigger_control_clr, q => trigger_control);
     trigger_control_clr <= '1' when trigger_control = std_logic_vector(to_unsigned(20000, 32)) else '0';
 
     trigger_ref_counter : lpm_counter
         generic map (LPM_WIDTH => ADC_DATA_WIDTH)
         port map (
             clock => clock,
-            aclr => reset,
+            aclr => reset_clk2,
             updown => trigger_ref_up,
             cnt_en => trigger_ref_en,
             q => trigger_ref

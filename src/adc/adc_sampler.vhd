@@ -50,6 +50,7 @@ begin
             q => adc_conv_count
         );
 
+    -- Gated clock specifically for ADC serial protocol
     adc_sclk <= clock when (unsigned(adc_conv_count) >= ADC_DOUT_START and unsigned(adc_conv_count) < ADC_DOUT_START + ADC_DATA_WIDTH) else '0';
     
     adc_convst <= '1' when unsigned(adc_conv_count) = 0 else '0';
