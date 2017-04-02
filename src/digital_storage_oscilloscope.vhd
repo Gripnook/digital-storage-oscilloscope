@@ -112,7 +112,7 @@ architecture arch of digital_storage_oscilloscope is
     signal fifo_wrfull : std_logic;
 
     signal horizontal_scale : std_logic_vector(31 downto 0);
-    signal vertical_scale : std_logic_vector(31 downto 0) := x"00000200";
+    signal vertical_scale : std_logic_vector(31 downto 0);
     signal upsample : integer range 0 to MAX_UPSAMPLE;
     signal downsample : integer range 0 to MAX_DOWNSAMPLE;
     
@@ -265,6 +265,8 @@ begin
             null;
         end case;
     end process;
+
+    vertical_scale <= x"00000200";
 
     trigger_controls_counter : lpm_counter
         generic map (LPM_WIDTH => 32)

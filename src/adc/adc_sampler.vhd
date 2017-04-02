@@ -27,13 +27,16 @@ architecture arch of adc_sampler is
     constant ADC_SAMPLE_PERIOD_WIDTH : integer := integer(ceil(log2(real(ADC_SAMPLE_PERIOD))));
     constant ADC_CONV_PERIOD : integer := (8 * ADC_SAMPLE_PERIOD) / 10; -- Maximum conversion period is 1.6 us
 
+    constant ADC_SCLK_START : integer := ADC_CONV_PERIOD - 1;
+
     constant ADC_DIN_WORD_LENGTH : integer := 6;
     constant ADC_DIN_WORD : std_logic_vector(0 to ADC_DIN_WORD_LENGTH - 1) := "100010"; -- Channel 1 Unipolar
-    constant ADC_DIN_WORD_START : integer := ADC_CONV_PERIOD - 2;
+    constant ADC_DIN_WORD_START : integer := ADC_CONV_PERIOD - 1;
 
-    constant ADC_DOUT_START : integer := ADC_CONV_PERIOD - 1;
+    constant ADC_DOUT_START : integer := ADC_CONV_PERIOD;
 
     signal adc_conv_count : std_logic_vector(ADC_SAMPLE_PERIOD_WIDTH - 1 downto 0);
+    signal adc_sclk_en : std_logic;
     signal adc_data_internal : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal adc_sample_internal : std_logic;
 
@@ -51,7 +54,18 @@ begin
         );
 
     -- Gated clock specifically for ADC serial protocol
-    adc_sclk <= clock when (unsigned(adc_conv_count) >= ADC_DOUT_START and unsigned(adc_conv_count) < ADC_DOUT_START + ADC_DATA_WIDTH) else '0';
+    clock_enable : process (clock, reset)
+    begin
+        if (reset = '1') then
+            adc_sclk_en <= '0';
+        elsif (falling_edge(clock)) then
+            adc_sclk_en <= '0';
+            if (unsigned(adc_conv_count) >= ADC_SCLK_START and unsigned(adc_conv_count) < ADC_SCLK_START + ADC_DATA_WIDTH) then
+                adc_sclk_en <= '1';
+            end if;
+        end if;
+    end process;
+    adc_sclk <= clock and adc_sclk_en;
     
     adc_convst <= '1' when unsigned(adc_conv_count) = 0 else '0';
 
