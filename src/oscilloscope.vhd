@@ -87,10 +87,10 @@ architecture arch of oscilloscope is
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_level : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
             trigger_frequency : in std_logic_vector(31 downto 0); -- Hz
-            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
-            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
-            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
-            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0) := (others => '0'); -- mV
+            voltage_pp : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+            voltage_avg : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+            voltage_max : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
+            voltage_min : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- mV
             mem_bus_grant : in std_logic;
             mem_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
             mem_bus_acquire : out std_logic;
@@ -124,12 +124,31 @@ architecture arch of oscilloscope is
         );
     end component;
 
+    component statistics is
+        generic (
+            DATA_WIDTH : integer;
+            ACCUMULATOR_WIDTH : integer
+        );
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            enable : in std_logic;
+            clear : in std_logic;
+            data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            spread : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+            average : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+            maximum : out std_logic_vector(DATA_WIDTH - 1 downto 0);
+            minimum : out std_logic_vector(DATA_WIDTH - 1 downto 0)
+        );
+    end component;
+
     constant ADDR_WIDTH : integer := 9;
 
     signal trigger : std_logic;
     signal trigger_frequency : std_logic_vector(31 downto 0);
 
     signal write_bus_grant : std_logic;
+    signal write_bus_grant_delayed : std_logic;
     signal write_bus_acquire : std_logic;
     signal write_address : std_logic_vector(ADDR_WIDTH - 1 downto 0);
     signal write_en : std_logic;
@@ -139,6 +158,14 @@ architecture arch of oscilloscope is
     signal read_address : std_logic_vector(ADDR_WIDTH - 1 downto 0);
     signal read_bus_grant : std_logic;
     signal read_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+
+    signal measurements_enable : std_logic;
+    signal measurements_clear : std_logic;
+
+    signal voltage_pp : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal voltage_avg : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal voltage_max : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal voltage_min : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
 
     signal rgb : std_logic_vector(23 downto 0);
 
@@ -200,6 +227,35 @@ begin
             read_data => read_data
         );
 
+    measurements_enable <= write_en;
+    measurements_clear <= write_bus_grant and (not write_bus_grant_delayed);
+
+    delay_register : process (clock, reset)
+    begin
+        if (reset = '1') then
+            write_bus_grant_delayed <= '0';
+        elsif (rising_edge(clock)) then
+            write_bus_grant_delayed <= write_bus_grant;
+        end if;
+    end process;
+
+    voltage_measurements : statistics
+        generic map (
+            DATA_WIDTH => ADC_DATA_WIDTH,
+            ACCUMULATOR_WIDTH => ADC_DATA_WIDTH + ADDR_WIDTH
+        )
+        port map (
+            clock => clock,
+            reset => reset,
+            enable => measurements_enable,
+            clear => measurements_clear,
+            data => write_data,
+            spread => voltage_pp,
+            average => voltage_avg,
+            maximum => voltage_max,
+            minimum => voltage_min
+        );
+
     vga_module : vga
         generic map (
             READ_ADDR_WIDTH => ADDR_WIDTH,
@@ -213,6 +269,10 @@ begin
             trigger_type => trigger_type,
             trigger_level => trigger_ref,
             trigger_frequency => trigger_frequency,
+            voltage_pp => voltage_pp,
+            voltage_avg => voltage_avg,
+            voltage_max => voltage_max,
+            voltage_min => voltage_min,
             mem_bus_grant => read_bus_grant,
             mem_data => read_data,
             mem_bus_acquire => read_bus_acquire,
