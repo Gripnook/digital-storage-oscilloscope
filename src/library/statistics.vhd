@@ -5,7 +5,7 @@ use ieee.numeric_std.all;
 entity statistics is
     generic (
         DATA_WIDTH : integer;
-        ACCUMULATOR_WIDTH : integer
+        POP_SIZE_WIDTH : integer
     );
     port (
         clock : in std_logic;
@@ -22,8 +22,8 @@ end statistics;
 
 architecture arch of statistics is
     
-    signal accumulator : std_logic_vector(ACCUMULATOR_WIDTH - 1 downto 0);
-    signal accumulator_next : std_logic_vector(ACCUMULATOR_WIDTH - 1 downto 0);
+    signal accumulator : std_logic_vector(DATA_WIDTH + POP_SIZE_WIDTH - 1 downto 0);
+    signal accumulator_next : std_logic_vector(DATA_WIDTH + POP_SIZE_WIDTH - 1 downto 0);
     signal maximum_internal : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal minimum_internal : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
@@ -35,7 +35,7 @@ architecture arch of statistics is
 begin
 
     spread <= std_logic_vector(unsigned(maximum_internal) - unsigned(minimum_internal));
-    average <= accumulator(ACCUMULATOR_WIDTH - 1 downto ACCUMULATOR_WIDTH - DATA_WIDTH);
+    average <= accumulator(DATA_WIDTH + POP_SIZE_WIDTH - 1 downto POP_SIZE_WIDTH);
     maximum <= maximum_internal;
     minimum <= minimum_internal;
 

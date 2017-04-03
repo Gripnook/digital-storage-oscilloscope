@@ -127,7 +127,7 @@ architecture arch of oscilloscope is
     component statistics is
         generic (
             DATA_WIDTH : integer;
-            ACCUMULATOR_WIDTH : integer
+            POP_SIZE_WIDTH : integer
         );
         port (
             clock : in std_logic;
@@ -242,7 +242,7 @@ begin
     voltage_measurements : statistics
         generic map (
             DATA_WIDTH => ADC_DATA_WIDTH,
-            ACCUMULATOR_WIDTH => ADC_DATA_WIDTH + ADDR_WIDTH
+            POP_SIZE_WIDTH => ADDR_WIDTH
         )
         port map (
             clock => clock,

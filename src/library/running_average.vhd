@@ -25,7 +25,7 @@ architecture arch of running_average is
     type registers is array(0 to 2 ** POP_SIZE_WIDTH) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal regs : registers;
 
-    signal running_sum : std_logic_vector(DATA_WIDTH + POP_SIZE_WIDTH downto 0);
+    signal running_sum : std_logic_vector(DATA_WIDTH + POP_SIZE_WIDTH - 1 downto 0);
     signal difference : std_logic_vector(DATA_WIDTH - 1 downto 0);
 
 begin

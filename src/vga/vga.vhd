@@ -103,6 +103,20 @@ architecture arch of vga is
         );
     end component;
 
+    component running_average is
+        generic (
+            DATA_WIDTH : integer;
+            POP_SIZE_WIDTH : integer
+        );
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            load : in std_logic;
+            data_in : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            average : out std_logic_vector(DATA_WIDTH - 1 downto 0)
+        );
+    end component;
+
     component bcd_converter is
         generic (
             DATA_WIDTH : integer;
@@ -141,6 +155,9 @@ architecture arch of vga is
     
     signal frame_count : std_logic_vector(31 downto 0);
     signal frame_count_en : std_logic;
+
+    signal averaging_load : std_logic;
+    signal average_trigger_frequency : std_logic_vector(31 downto 0);
 
     signal bcd_start : std_logic;
     signal horizontal_scale_bcd : std_logic_vector(15 downto 0);
@@ -229,6 +246,21 @@ begin
         );
     frame_count_en <= '1' when mem_bus_grant = '1' and mem_bus_grant_delayed /= mem_bus_grant else '0';
 
+    averaging_load <= frame_count_en;
+
+    averaging : running_average
+        generic map (
+            DATA_WIDTH => 32,
+            POP_SIZE_WIDTH => 4
+        )
+        port map (
+            clock => clock,
+            reset => reset,
+            load => averaging_load,
+            data_in => trigger_frequency,
+            average => average_trigger_frequency
+        );
+
     bcd_start <= '1' when frame_count_en = '1' and frame_count = x"00000000" else '0';
 
     hscale_bcd : bcd_converter
@@ -251,7 +283,7 @@ begin
         generic map (DATA_WIDTH => 32, BCD_DIGITS => 6)
         port map (
             clock => clock, reset => reset,
-            binary => trigger_frequency, start => bcd_start,
+            binary => average_trigger_frequency, start => bcd_start,
             bcd => trigger_frequency_bcd, done => open
         );
 
