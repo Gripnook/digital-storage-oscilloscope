@@ -76,7 +76,7 @@ begin
     minimum_reg : process (clock, reset)
     begin
         if (reset = '1') then
-            minimum_internal <= (others => '0');
+            minimum_internal <= (others => '1');
         elsif (rising_edge(clock)) then
             if (clear = '1') then
                 minimum_internal <= (others => '1');
