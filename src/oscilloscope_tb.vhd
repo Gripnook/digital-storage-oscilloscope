@@ -13,8 +13,8 @@ architecture arch of oscilloscope_tb is
     component oscilloscope is
         generic (
             ADC_DATA_WIDTH : integer := 12;
-            MAX_UPSAMPLE : integer := 5;
-            MAX_DOWNSAMPLE : integer := 2
+            MAX_UPSAMPLE : integer := 4;
+            MAX_DOWNSAMPLE : integer := 3
         );
         port (
             clock : in std_logic;
@@ -57,8 +57,8 @@ architecture arch of oscilloscope_tb is
     signal reset : std_logic;
 
     signal horizontal_scale : std_logic_vector(31 downto 0);
-    signal upsample : integer range 0 to 5;
-    signal downsample : integer range 0 to 2;
+    signal upsample : integer range 0 to 4;
+    signal downsample : integer range 0 to 3;
 
     signal adc_data : std_logic_vector(11 downto 0);
     signal adc_sample : std_logic;
@@ -163,7 +163,7 @@ begin
         wait for 14 ms;
 
         -- 100 kHz
-        upsample <= 5;
+        upsample <= 4;
         horizontal_scale <= std_logic_vector(to_unsigned(4, 32));
         frequency_control <= x"3333";
         wait for 14 ms;

@@ -49,7 +49,7 @@ architecture arch of data_acquisition is
     type state_type is (IDLE, TRIGGERED, BUS_WAIT, RAM_READ_ADDR, RAM_READ_DATA, BUS_WRITE);
     signal state : state_type := IDLE;
 
-    constant RAM_ADDR_WIDTH : integer := ADDR_WIDTH + 3; -- we store eight times the data to be able to continuously sample
+    constant RAM_ADDR_WIDTH : integer := ADDR_WIDTH + MAX_DOWNSAMPLE + 1; -- we store extra data to be able to continuously sample
 
     signal adc_address : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);
     signal ram_address : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);

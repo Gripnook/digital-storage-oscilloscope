@@ -2,8 +2,8 @@ library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
-use ieee.math_real.all;
 use lpm.lpm_components.all;
+use work.filter_parameters.all;
 
 entity sinc_interpolation is
     generic (
@@ -25,7 +25,7 @@ entity sinc_interpolation is
         write_bus_grant : in std_logic;
         write_bus_acquire : out std_logic;
         write_address : out std_logic_vector(WRITE_ADDR_WIDTH - 1 downto 0);
-        write_en : buffer std_logic;
+        write_en : out std_logic;
         write_data : out std_logic_vector(DATA_WIDTH - 1 downto 0)
     );
 end sinc_interpolation;
@@ -33,182 +33,231 @@ end sinc_interpolation;
 architecture arch of sinc_interpolation is
 
     component lowpass_filter is
-        port ( 
+        generic (MAX_UPSAMPLE : integer);
+        port (
             clock : in std_logic;
             enable : in std_logic;
             reset : in std_logic;
-            upsample : in integer range 0 to 5; -- upsampling rate is 2 ** upsample
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
             filter_in : in std_logic_vector(11 downto 0);
             filter_out : out std_logic_vector(11 downto 0)
         );
     end component;
 
-    type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE_ADDR, SINC_WRITE_DATA, SINC_DONE);
+    constant HLP1_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1);
+    constant HLP1_END_ADDR : integer := HLP1_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
+
+    constant HLP2_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP2_LENGTH / 2;
+    constant HLP2_END_ADDR : integer := HLP2_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
+
+    constant HLP4_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP4_LENGTH / 2;
+    constant HLP4_END_ADDR : integer := HLP4_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
+
+    constant HLP8_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP8_LENGTH / 2;
+    constant HLP8_END_ADDR : integer := HLP8_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
+
+    constant HLP16_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP16_LENGTH / 2;
+    constant HLP16_END_ADDR : integer := HLP16_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
+
+    type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE);
     signal state : state_type := READ_BUS_REQ;
-    
-    type memory is array (0 to WRITE_ADDR_WIDTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
+
+    type memory is array(0 to 2 ** READ_ADDR_WIDTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal mem : memory;
-    
-    signal writein_en : std_logic;
-    signal read_addr_sel : std_logic;
-    signal write_addr_sel : std_logic;
-    signal readin_address : integer range 0 to 2 ** READ_ADDR_WIDTH - 1; 
-    signal writein_address : integer range 0 to 2 ** WRITE_ADDR_WIDTH - 1; 
-    signal count_internal : std_logic_vector(WRITE_ADDR_WIDTH - 1 downto 0);
-    signal count : integer range 0 to 2 ** WRITE_ADDR_WIDTH - 1;
-    signal count_en : std_logic;
-    signal count_clr : std_logic;
-    signal sel_en : std_logic;
+
+    constant READ_ADDR_MAX : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0) := (others => '1');
+
+    signal memwrite : std_logic;
+
+    signal read_address_internal : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
+    signal read_address_en : std_logic;
+    signal read_address_load : std_logic;
+    signal read_address_clr : std_logic;
+
+    signal write_address_en : std_logic;
+    signal write_address_clr : std_logic;
+
+    signal upsample_internal : integer range 0 to MAX_UPSAMPLE;
+    signal input_reg_en : std_logic;
+
+    signal start_address : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
+    signal end_address : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
+
+    signal filter_en : std_logic;
+    signal filter_in : std_logic_vector(11 downto 0) := (others => '0');
+    signal filter_out : std_logic_vector(11 downto 0);
 
 begin
 
     filter : lowpass_filter
+        generic map (MAX_UPSAMPLE => MAX_UPSAMPLE)
         port map (
             clock => clock,
-            enable => sel_en,
+            enable => filter_en,
             reset => reset,
-            upsample => upsample,
-            filter_in => read_data,
-            filter_out => write_data        
+            upsample => upsample_internal,
+            filter_in => filter_in,
+            filter_out => filter_out
         );
+    filter_in(DATA_WIDTH - 1 downto 0) <= read_data;
+
+    memory_process : process (clock)
+    begin
+        if (rising_edge(clock)) then
+            if (memwrite = '1') then
+                mem(to_integer(unsigned(read_address_internal))) <= filter_out(DATA_WIDTH - 1 downto 0);
+            end if;
+            write_data <= mem(to_integer(unsigned(read_address_internal)));
+        end if;
+    end process;
+
+    read_address_counter : lpm_counter
+        generic map (LPM_WIDTH => READ_ADDR_WIDTH)
+        port map (
+            clock => clock,
+            aclr => reset,
+            sclr => read_address_clr,
+            sload => read_address_load,
+            data => start_address,
+            cnt_en => read_address_en,
+            q => read_address_internal
+        );
+    read_address <= read_address_internal;
+
+    write_address_counter : lpm_counter
+        generic map (LPM_WIDTH => WRITE_ADDR_WIDTH)
+        port map (
+            clock => clock,
+            aclr => reset,
+            sclr => write_address_clr,
+            cnt_en => write_address_en,
+            q => write_address
+        );
+
+    input_register : process (clock, reset)
+    begin
+        if (reset = '1') then
+            upsample_internal <= 0;
+        elsif (rising_edge(clock)) then
+            if (input_reg_en = '1') then
+                upsample_internal <= upsample;
+            end if;
+        end if;
+    end process;
+
+    address_bounds_mux : process (upsample_internal)
+    begin
+        -- default outputs
+        start_address <= std_logic_vector(to_unsigned(HLP1_START_ADDR, READ_ADDR_WIDTH));
+        end_address <= std_logic_vector(to_unsigned(HLP1_END_ADDR, READ_ADDR_WIDTH));
+
+        case upsample_internal is
+        when 1 =>
+            start_address <= std_logic_vector(to_unsigned(HLP2_START_ADDR, READ_ADDR_WIDTH));
+            end_address <= std_logic_vector(to_unsigned(HLP2_END_ADDR, READ_ADDR_WIDTH));
+        when 2 =>
+            start_address <= std_logic_vector(to_unsigned(HLP4_START_ADDR, READ_ADDR_WIDTH));
+            end_address <= std_logic_vector(to_unsigned(HLP4_END_ADDR, READ_ADDR_WIDTH));
+        when 3 =>
+            start_address <= std_logic_vector(to_unsigned(HLP8_START_ADDR, READ_ADDR_WIDTH));
+            end_address <= std_logic_vector(to_unsigned(HLP8_END_ADDR, READ_ADDR_WIDTH));
+        when 4 =>
+            start_address <= std_logic_vector(to_unsigned(HLP16_START_ADDR, READ_ADDR_WIDTH));
+            end_address <= std_logic_vector(to_unsigned(HLP16_END_ADDR, READ_ADDR_WIDTH));
+        when others =>
+            null;
+        end case;
+    end process;
 
     state_transition : process (clock, reset)
     begin
         if (reset = '1') then
-            state <= READ_BUS_REQ; -- when idle, always request read bus to read the input;
+            state <= READ_BUS_REQ;
         elsif (rising_edge(clock)) then
             case state is
-            when READ_BUS_REQ =>  
+            when READ_BUS_REQ =>
                 if (read_bus_grant = '1') then
-                    state <= SINC_READ_ADDR; --if read bus is granted, send the address where the date will be read;
+                    state <= SINC_READ_ADDR;
                 else
                     state <= READ_BUS_REQ;
                 end if;
             when SINC_READ_ADDR =>
-                state <= SINC_READ_DATA; --read the data of sent address;
+                state <= SINC_READ_DATA;
             when SINC_READ_DATA =>
-                state <= SINC_PROC; --process the data;
+                state <= SINC_PROC;
             when SINC_PROC =>
-                state <= SINC_WRITE_IN; --write the data to internal storage;
+                state <= SINC_WRITE_IN;
             when SINC_WRITE_IN =>
-                if (count = 2 ** DATA_WIDTH - 1) then
-                    state <= WRITE_BUS_REQ; -- internal storage filled, requesting to burst write to the SRAM for display, also clears the counter;
+                if (read_address_internal = READ_ADDR_MAX) then
+                    state <= WRITE_BUS_REQ;
                 else
-                    state <= SINC_READ_ADDR; -- burst read until the write buffer is filled and ready for burst write;
+                    state <= SINC_READ_ADDR;
                 end if;
-            when WRITE_BUS_REQ => 
+            when WRITE_BUS_REQ =>
                 if (write_bus_grant = '1') then
-                    state <= SINC_WRITE_ADDR; -- sends the address to write to the SRAM;
+                    state <= SINC_WRITE;
                 else
                     state <= WRITE_BUS_REQ;
                 end if;
-            when SINC_WRITE_ADDR =>
-                state <= SINC_WRITE_DATA; --write the data to the sent address in the SRAM;
-            when SINC_WRITE_DATA =>
-                if (count = 2 ** DATA_WIDTH - 1) then
-                    state <= READ_BUS_REQ; -- back to starting stage, request the reading bus again;
+            when SINC_WRITE =>
+                if (read_address_internal = end_address) then
+                    state <= READ_BUS_REQ;
                 else
-                    state <= SINC_WRITE_ADDR; -- burst write until the data in the buffer are all written to the SRAM;
+                    state <= SINC_WRITE;
                 end if;
             when others =>
                  null;
             end case;
         end if;
     end process;
-    
-    outputs : process (state, read_bus_grant, count)
+
+    outputs : process (state, read_bus_grant, write_bus_grant)
     begin
         -- default outputs
         read_bus_acquire <= '0';
         write_bus_acquire <= '0';
-        writein_en <= '0'; --enables writing to memory
-        read_addr_sel <= '0'; 
-        write_addr_sel <= '0';
-        count_en <= '0';
-        count_clr <= '0';
         write_en <= '0';
-        sel_en <= '0';
+        filter_en <= '0';
+        memwrite <= '0';
+        read_address_en <= '0';
+        read_address_load <= '0';
+        read_address_clr <= '0';
+        write_address_en <= '0';
+        write_address_clr <= '0';
+        input_reg_en <= '0';
 
         case state is
         when READ_BUS_REQ =>
             read_bus_acquire <= '1';
+            if (read_bus_grant = '1') then
+                read_address_clr <= '1';
+                input_reg_en <= '1';
+            end if;
         when SINC_READ_ADDR =>
             read_bus_acquire <= '1';
-            read_addr_sel <= '1';
         when SINC_READ_DATA =>
             read_bus_acquire <= '1';
-            read_addr_sel <= '1';
         when SINC_PROC =>
             read_bus_acquire <= '1';
-            read_addr_sel <= '1';
-            sel_en <= '1';
+            filter_en <= '1';
         when SINC_WRITE_IN =>
             read_bus_acquire <= '1';
-            writein_en <= '1';
-            read_addr_sel <= '1';
-            if (count = 2 ** DATA_WIDTH - 1) then
-                count_clr <= '1';
-            else
-                count_en <= '1';
-            end if;
+            memwrite <= '1';
+            read_address_en <= '1';
         when WRITE_BUS_REQ =>
-            read_bus_acquire <= '0';
-            sel_en <= '0';
             write_bus_acquire <= '1';
-        when SINC_WRITE_ADDR =>
+            if (write_bus_grant = '1') then
+                read_address_load <= '1';
+                write_address_clr <= '1';
+            end if;
+        when SINC_WRITE =>
             write_bus_acquire <= '1';
-            write_addr_sel <= '1';
-        when SINC_WRITE_DATA =>
-            write_bus_acquire <= '1';
-            write_addr_sel <= '1';
             write_en <= '1';
-            if (count = 2 ** DATA_WIDTH - 1) then
-                count_clr <= '1';
-            else
-                count_en <= '1';
-            end if;            
+            read_address_en <= '1';
+            write_address_en <= '1';
         when others =>
             null;
         end case;
     end process;
 
-    address_counter : lpm_counter
-        generic map (LPM_WIDTH => WRITE_ADDR_WIDTH)
-        port map (
-            clock => clock,
-            aclr => reset,
-            sclr => count_clr,
-            cnt_en => count_en,
-            q => count_internal
-        );
-    count <= to_integer(unsigned(count_internal));
-
-    with read_addr_sel select readin_address <=
-        count when '1',
-        0 when others; --not sure about this; 
-    read_address <= std_logic_vector(to_unsigned(readin_address, READ_ADDR_WIDTH));
-
-    with write_addr_sel select writein_address <=
-        count when '1',
-        0 when others; --not sure about this; 
-    write_address <= std_logic_vector(to_unsigned(writein_address, WRITE_ADDR_WIDTH));
-
-    write_to_memory : process (clock) 
-    begin
-        if (rising_edge(clock)) then
-            if (writein_en = '1') then --change the following logic to processed data!
-                mem(readin_address) <= read_data(DATA_WIDTH - 1 downto 0);
-            end if;
-        end if;
-    end process;
-
-    write_out : process (clock)
-    begin
-        if (rising_edge(clock)) then
-            if (write_en = '1') then 
-                write_data <= mem (writein_address);
-            end if;
-        end if;
-    end process;
-    
 end architecture;

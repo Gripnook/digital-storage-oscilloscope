@@ -7,8 +7,8 @@ use lpm.lpm_components.all;
 entity digital_storage_oscilloscope is
     generic (
         ADC_DATA_WIDTH : integer := 12;
-        MAX_UPSAMPLE : integer := 5;
-        MAX_DOWNSAMPLE : integer := 2
+        MAX_UPSAMPLE : integer := 4;
+        MAX_DOWNSAMPLE : integer := 3
     );
     port (
         clock : in std_logic;
@@ -230,37 +230,37 @@ begin
         
         case timebase is
         when "000" =>
-            horizontal_scale <= x"00000004";
-            upsample <= 5;
-            downsample <= 0;
-        when "001" =>
             horizontal_scale <= x"00000008";
             upsample <= 4;
             downsample <= 0;
-        when "010" =>
+        when "001" =>
             horizontal_scale <= x"00000010";
             upsample <= 3;
             downsample <= 0;
-        when "011" =>
+        when "010" =>
             horizontal_scale <= x"00000020";
             upsample <= 2;
             downsample <= 0;
-        when "100" =>
+        when "011" =>
             horizontal_scale <= x"00000040";
             upsample <= 1;
             downsample <= 0;
-        when "101" =>
+        when "100" =>
             horizontal_scale <= x"00000080";
             upsample <= 0;
             downsample <= 0;
-        when "110" =>
+        when "101" =>
             horizontal_scale <= x"00000100";
             upsample <= 0;
             downsample <= 1;
-        when "111" =>
+        when "110" =>
             horizontal_scale <= x"00000200";
             upsample <= 0;
             downsample <= 2;
+        when "111" =>
+            horizontal_scale <= x"00000400";
+            upsample <= 0;
+            downsample <= 3;
         when others =>
             null;
         end case;

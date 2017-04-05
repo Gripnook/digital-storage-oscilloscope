@@ -32,6 +32,12 @@ vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
 vcom triggering/triggering.vhd
 vcom data_acquisition/data_acquisition.vhd
+vcom sinc_interpolation/Hlp2.vhd
+vcom sinc_interpolation/Hlp4.vhd
+vcom sinc_interpolation/Hlp8.vhd
+vcom sinc_interpolation/Hlp16.vhd
+vcom sinc_interpolation/lowpass_filter.vhd
+vcom sinc_interpolation/sinc_interpolation.vhd
 vcom oscilloscope.vhd
 vcom oscilloscope_tb.vhd
 
@@ -42,7 +48,7 @@ vsim -t ns oscilloscope_tb
 force -deposit clock 0 0 ns, 1 10 ns -repeat 20 ns
 
 # Add the waves
-AddWaves
+#AddWaves
 
 # Run
 run 100ms

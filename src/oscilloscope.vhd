@@ -74,6 +74,31 @@ architecture arch of oscilloscope is
         );
     end component;
 
+    component sinc_interpolation is
+        generic (
+            READ_ADDR_WIDTH : integer;
+            WRITE_ADDR_WIDTH : integer;
+            DATA_WIDTH : integer range 8 to 12;
+            MAX_UPSAMPLE : integer
+        );
+        port (
+            clock : in std_logic;
+            reset : in std_logic;
+            upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
+            -- read bus
+            read_bus_grant : in std_logic;
+            read_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
+            read_bus_acquire : out std_logic;
+            read_address : out std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
+            -- write bus
+            write_bus_grant : in std_logic;
+            write_bus_acquire : out std_logic;
+            write_address : out std_logic_vector(WRITE_ADDR_WIDTH - 1 downto 0);
+            write_en : out std_logic;
+            write_data : out std_logic_vector(DATA_WIDTH - 1 downto 0)
+        );
+    end component;
+
     component vga is
         generic (
             READ_ADDR_WIDTH : integer;
@@ -142,22 +167,34 @@ architecture arch of oscilloscope is
         );
     end component;
 
-    constant ADDR_WIDTH : integer := 9;
+    constant PROCESSING_ADDR_WIDTH : integer := 10;
+    constant VGA_ADDR_WIDTH : integer := 9;
 
     signal trigger : std_logic;
     signal trigger_frequency : std_logic_vector(31 downto 0);
 
-    signal write_bus_grant : std_logic;
-    signal write_bus_grant_delayed : std_logic;
-    signal write_bus_acquire : std_logic;
-    signal write_address : std_logic_vector(ADDR_WIDTH - 1 downto 0);
-    signal write_en : std_logic;
-    signal write_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal write_bus_grant1 : std_logic;
+    signal write_bus_acquire1 : std_logic;
+    signal write_address1 : std_logic_vector(PROCESSING_ADDR_WIDTH - 1 downto 0);
+    signal write_en1 : std_logic;
+    signal write_data1 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
 
-    signal read_bus_acquire : std_logic;
-    signal read_address : std_logic_vector(ADDR_WIDTH - 1 downto 0);
-    signal read_bus_grant : std_logic;
-    signal read_data : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+    signal read_bus_acquire1 : std_logic;
+    signal read_address1 : std_logic_vector(PROCESSING_ADDR_WIDTH - 1 downto 0);
+    signal read_bus_grant1 : std_logic;
+    signal read_data1 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+
+    signal write_bus_grant2 : std_logic;
+    signal write_bus_grant2_delayed : std_logic;
+    signal write_bus_acquire2 : std_logic;
+    signal write_address2 : std_logic_vector(VGA_ADDR_WIDTH - 1 downto 0);
+    signal write_en2 : std_logic;
+    signal write_data2 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+
+    signal read_bus_acquire2 : std_logic;
+    signal read_address2 : std_logic_vector(VGA_ADDR_WIDTH - 1 downto 0);
+    signal read_bus_grant2 : std_logic;
+    signal read_data2 : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
 
     signal measurements_enable : std_logic;
     signal measurements_clear : std_logic;
@@ -173,7 +210,7 @@ begin
 
     data_acquisition_module : data_acquisition
         generic map (
-            ADDR_WIDTH => ADDR_WIDTH,
+            ADDR_WIDTH => PROCESSING_ADDR_WIDTH,
             DATA_WIDTH => ADC_DATA_WIDTH,
             MAX_UPSAMPLE => MAX_UPSAMPLE,
             MAX_DOWNSAMPLE => MAX_DOWNSAMPLE
@@ -186,11 +223,11 @@ begin
             trigger => trigger,
             upsample => upsample,
             downsample => downsample,
-            write_bus_grant => write_bus_grant,
-            write_bus_acquire => write_bus_acquire,
-            write_address => write_address,
-            write_en => write_en,
-            write_data => write_data
+            write_bus_grant => write_bus_grant1,
+            write_bus_acquire => write_bus_acquire1,
+            write_address => write_address1,
+            write_en => write_en1,
+            write_data => write_data1
         );
 
     triggering_module : triggering
@@ -208,48 +245,89 @@ begin
             trigger_frequency => trigger_frequency
         );
 
-    data_acquisition_vga_memory : arbitrated_memory
+    acquisition_interpolation_memory : arbitrated_memory
         generic map (
-            ADDR_WIDTH => ADDR_WIDTH,
+            ADDR_WIDTH => PROCESSING_ADDR_WIDTH,
             DATA_WIDTH => ADC_DATA_WIDTH
         )
         port map (
             clock => clock,
             reset => reset,
-            write_bus_acquire => write_bus_acquire,
-            write_address => write_address,
-            write_en => write_en,
-            write_data => write_data,
-            write_bus_grant => write_bus_grant,
-            read_bus_acquire => read_bus_acquire,
-            read_address => read_address,
-            read_bus_grant => read_bus_grant,
-            read_data => read_data
+            write_bus_acquire => write_bus_acquire1,
+            write_address => write_address1,
+            write_en => write_en1,
+            write_data => write_data1,
+            write_bus_grant => write_bus_grant1,
+            read_bus_acquire => read_bus_acquire1,
+            read_address => read_address1,
+            read_bus_grant => read_bus_grant1,
+            read_data => read_data1
         );
 
-    measurements_enable <= write_en;
-    measurements_clear <= write_bus_grant and (not write_bus_grant_delayed);
+    interpolation_module : sinc_interpolation
+        generic map (
+            READ_ADDR_WIDTH => PROCESSING_ADDR_WIDTH,
+            WRITE_ADDR_WIDTH => VGA_ADDR_WIDTH,
+            DATA_WIDTH => ADC_DATA_WIDTH,
+            MAX_UPSAMPLE => MAX_UPSAMPLE
+        )
+        port map (
+            clock => clock,
+            reset => reset,
+            upsample => upsample,
+            read_bus_grant => read_bus_grant1,
+            read_data => read_data1,
+            read_bus_acquire => read_bus_acquire1,
+            read_address => read_address1,
+            write_bus_grant => write_bus_grant2,
+            write_bus_acquire => write_bus_acquire2,
+            write_address => write_address2,
+            write_en => write_en2,
+            write_data => write_data2
+        );
+
+    interpolation_vga_memory : arbitrated_memory
+        generic map (
+            ADDR_WIDTH => VGA_ADDR_WIDTH,
+            DATA_WIDTH => ADC_DATA_WIDTH
+        )
+        port map (
+            clock => clock,
+            reset => reset,
+            write_bus_acquire => write_bus_acquire2,
+            write_address => write_address2,
+            write_en => write_en2,
+            write_data => write_data2,
+            write_bus_grant => write_bus_grant2,
+            read_bus_acquire => read_bus_acquire2,
+            read_address => read_address2,
+            read_bus_grant => read_bus_grant2,
+            read_data => read_data2
+        );
+
+    measurements_enable <= write_en2;
+    measurements_clear <= write_bus_grant2 and (not write_bus_grant2_delayed);
 
     delay_register : process (clock, reset)
     begin
         if (reset = '1') then
-            write_bus_grant_delayed <= '0';
+            write_bus_grant2_delayed <= '0';
         elsif (rising_edge(clock)) then
-            write_bus_grant_delayed <= write_bus_grant;
+            write_bus_grant2_delayed <= write_bus_grant2;
         end if;
     end process;
 
     voltage_measurements : statistics
         generic map (
             DATA_WIDTH => ADC_DATA_WIDTH,
-            POP_SIZE_WIDTH => ADDR_WIDTH
+            POP_SIZE_WIDTH => VGA_ADDR_WIDTH
         )
         port map (
             clock => clock,
             reset => reset,
             enable => measurements_enable,
             clear => measurements_clear,
-            data => write_data,
+            data => write_data2,
             spread => voltage_pp,
             average => voltage_avg,
             maximum => voltage_max,
@@ -258,7 +336,7 @@ begin
 
     vga_module : vga
         generic map (
-            READ_ADDR_WIDTH => ADDR_WIDTH,
+            READ_ADDR_WIDTH => VGA_ADDR_WIDTH,
             READ_DATA_WIDTH => ADC_DATA_WIDTH
         )
         port map (
@@ -273,10 +351,10 @@ begin
             voltage_avg => voltage_avg,
             voltage_max => voltage_max,
             voltage_min => voltage_min,
-            mem_bus_grant => read_bus_grant,
-            mem_data => read_data,
-            mem_bus_acquire => read_bus_acquire,
-            mem_address => read_address,
+            mem_bus_grant => read_bus_grant2,
+            mem_data => read_data2,
+            mem_bus_acquire => read_bus_acquire2,
+            mem_address => read_address2,
             pixel_clock => pixel_clock,
             rgb => rgb,
             hsync => hsync,
