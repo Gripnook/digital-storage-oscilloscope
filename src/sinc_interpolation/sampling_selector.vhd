@@ -37,7 +37,7 @@ architecture arch of sampling_selector is
             enable : in std_logic;
             reset : in std_logic;
             filter_in : in std_logic_vector(12 downto 0);
-            filter_out : out std_logic_vector(29 downto 0)
+            filter_out : out std_logic_vector(30 downto 0)
         );
     end component;
 
@@ -47,7 +47,7 @@ architecture arch of sampling_selector is
             enable : in std_logic;
             reset : in std_logic;
             filter_in : in std_logic_vector(12 downto 0);
-            filter_out : out std_logic_vector(29 downto 0)
+            filter_out : out std_logic_vector(31 downto 0)
         );
     end component;
 
@@ -57,7 +57,7 @@ architecture arch of sampling_selector is
             enable : in std_logic;
             reset : in std_logic;
             filter_in : in std_logic_vector(12 downto 0);
-            filter_out : out std_logic_vector(29 downto 0)
+            filter_out : out std_logic_vector(32 downto 0)
         );
     end component;
 
@@ -67,11 +67,11 @@ architecture arch of sampling_selector is
             enable : in std_logic;
             reset : in std_logic;
             filter_in : in std_logic_vector(12 downto 0);
-            filter_out : out std_logic_vector(29 downto 0)
+            filter_out : out std_logic_vector(33 downto 0)
         );
     end component;
     signal filter_in : std_logic_vector(12 downto 0); 
-    signal filter_out : std_logic_vector (29 downto 0); 
+    signal filter_out : std_logic_vector (33 downto 0); 
     signal hlp_enable : std_logic_vector (4 downto 0);
 
 
@@ -83,7 +83,7 @@ begin
             enable => hlp_enable(0),
             reset => reset,
             filter_in => filter_in,
-            filter_out => filter_out            
+            filter_out => filter_out (29 downto 0) --takes the first 30 bit of filter_out to copy the output         
         );
 
     filter_4 : Hlp4
@@ -92,7 +92,7 @@ begin
             enable => hlp_enable(1),
             reset => reset,
             filter_in => filter_in,
-            filter_out => filter_out            
+            filter_out => filter_out (30 downto 0)          
         );
 
     filter_8 : Hlp8
@@ -101,7 +101,7 @@ begin
             enable => hlp_enable(2),
             reset => reset,
             filter_in => filter_in,
-            filter_out => filter_out            
+            filter_out => filter_out (31 downto 0)            
         );
 
     filter_16 : Hlp16
@@ -110,7 +110,7 @@ begin
             enable => hlp_enable(3),
             reset => reset,
             filter_in => filter_in,
-            filter_out => filter_out            
+            filter_out => filter_out (32 downto 0)             
         );
 
     filter_32 : Hlp32
@@ -119,7 +119,7 @@ begin
             enable => hlp_enable(4),
             reset => reset,
             filter_in => filter_in,
-            filter_out => filter_out            
+            filter_out => filter_out (33 downto 0)            
         );
     ---decide which hlp to use
     select_hlp : process (clock, reset, upsample)
@@ -138,7 +138,7 @@ begin
         end if;
     end process;
 
-    --this process adds a '0' to the MSB of read_in for the hlp and trucate the decimal digits of the output for following modules
+    --this process adds a '0' to the MSB of read_in for the hlp and use the decimal digits of the output for following modules
     signal_shifter : process (clock, reset, upsample)
     begin
         if (reset = '1') then
@@ -146,13 +146,13 @@ begin
         elsif (rising_edge(clock) and enable = '1') then
             filter_in <= (12 downto read_in'length => '0') & read_in; ---add leading 0s according to the length of read_in
             case upsample is 
-                when "001" => write_out <= filter_out sll 1 (29 downto 19); --problem here, my intention was to shift the input according to the sampling rate, then truncate the least significant bits (16 bits are after decimal point)
-                when "010" => write_out <= filter_out sll 2 (29 downto 19); --but it gives me compile errors.
-                when "011" => write_out <= filter_out sll 3 (29 downto 19);
-                when "100" => write_out <= filter_out sll 4 (29 downto 19);                
-                when "101" => write_out <= filter_out sll 5 (29 downto 19);
+                when "001" => write_out <= filter_out (27 downto 16); ---write in is 12 bit unsigned, which means the output should not be higher than 12 bit + 16 bit (decimal) = 28 bits, so the sign bit and 29th bit is ignored.
+                when "010" => write_out <= filter_out (26 downto 15);---shift left one bit and take 1 bit from decimal
+                when "011" => write_out <= filter_out (25 downto 14);
+                when "100" => write_out <= filter_out (24 downto 13);             
+                when "101" => write_out <= filter_out (23 downto 12);
                 when others => write_out <= read_in; --when hlp is not enabled, take input directly without processing
-                                                     --may need to add buffer for consistent timing.
+                                                     --may need to add buffer for making the timing consistent.
              end case; 
         end if;
     end process;
