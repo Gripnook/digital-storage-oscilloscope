@@ -3,7 +3,6 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
 entity sampling_selector is
-
    generic (
         READ_DATA_WIDTH : integer := 12;
         WRITE_DATA_WIDTH : integer := 12
@@ -16,7 +15,6 @@ entity sampling_selector is
         read_in : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); -- input from reading by sinc_interpol, needs to add a 0 to MSB to make it sfix13,
         write_out : out std_logic_vector(WRITE_DATA_WIDTH - 1 downto 0)  -- sfix30_En16 taken from Hlp processed to 12 bit before giving to sinc_interpol
     );
-
 end sampling_selector;
 
 architecture arch of sampling_selector is
