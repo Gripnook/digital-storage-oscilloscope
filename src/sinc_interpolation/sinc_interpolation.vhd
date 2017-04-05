@@ -7,47 +7,46 @@ use lpm.lpm_components.all;
 
 entity sinc_interpolation is
     generic (
-        READ_ADDR_WIDTH : integer := 10;
-        READ_DATA_WIDTH : integer := 12;
-        WRITE_ADDR_WIDTH : integer := 9;
-        WRITE_DATA_WIDTH : integer := 12
+        READ_ADDR_WIDTH : integer;
+        WRITE_ADDR_WIDTH : integer;
+        DATA_WIDTH : integer range 8 to 12;
+        MAX_UPSAMPLE : integer
     );
     port (
         clock : in std_logic;
         reset : in std_logic;
+        upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
         -- read bus
         read_bus_grant : in std_logic;
-        read_data : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0);
+        read_data : in std_logic_vector(DATA_WIDTH - 1 downto 0);
         read_bus_acquire : out std_logic;
         read_address : out std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
-        -- up-sampling rate, gave 3 bits signal because we have 6 upsampling modes.
-        upsample : in std_logic_vector(2 downto 0);
         -- write bus
         write_bus_grant : in std_logic;
         write_bus_acquire : out std_logic;
         write_address : out std_logic_vector(WRITE_ADDR_WIDTH - 1 downto 0);
         write_en : buffer std_logic;
-        write_data : out std_logic_vector(WRITE_DATA_WIDTH - 1 downto 0)
+        write_data : out std_logic_vector(DATA_WIDTH - 1 downto 0)
     );
 end sinc_interpolation;
 
 architecture arch of sinc_interpolation is
 
-    component sampling_selector is
-        port (
-            clock : in std_logic; 
-            enable : in std_logic; 
-            reset :   in std_logic; 
-            upsample : in std_logic_vector(2 downto 0);
-            read_in : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); 
-            write_out : out std_logic_vector(WRITE_DATA_WIDTH - 1 downto 0)
+    component lowpass_filter is
+        port ( 
+            clock : in std_logic;
+            enable : in std_logic;
+            reset : in std_logic;
+            upsample : in integer range 0 to 5; -- upsampling rate is 2 ** upsample
+            filter_in : in std_logic_vector(11 downto 0);
+            filter_out : out std_logic_vector(11 downto 0)
         );
     end component;
 
     type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE_ADDR, SINC_WRITE_DATA, SINC_DONE);
     signal state : state_type := READ_BUS_REQ;
     
-    type memory is array (0 to WRITE_ADDR_WIDTH - 1) of std_logic_vector(WRITE_DATA_WIDTH - 1 downto 0);
+    type memory is array (0 to WRITE_ADDR_WIDTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal mem : memory;
     
     signal writein_en : std_logic;
@@ -63,14 +62,14 @@ architecture arch of sinc_interpolation is
 
 begin
 
-    selector : sampling_selector
+    filter : lowpass_filter
         port map (
             clock => clock,
             enable => sel_en,
             reset => reset,
             upsample => upsample,
-            read_in => read_data,
-            write_out => write_data        
+            filter_in => read_data,
+            filter_out => write_data        
         );
 
     state_transition : process (clock, reset)
@@ -92,7 +91,7 @@ begin
             when SINC_PROC =>
                 state <= SINC_WRITE_IN; --write the data to internal storage;
             when SINC_WRITE_IN =>
-                if (count = 2 ** WRITE_DATA_WIDTH - 1) then
+                if (count = 2 ** DATA_WIDTH - 1) then
                     state <= WRITE_BUS_REQ; -- internal storage filled, requesting to burst write to the SRAM for display, also clears the counter;
                 else
                     state <= SINC_READ_ADDR; -- burst read until the write buffer is filled and ready for burst write;
@@ -106,7 +105,7 @@ begin
             when SINC_WRITE_ADDR =>
                 state <= SINC_WRITE_DATA; --write the data to the sent address in the SRAM;
             when SINC_WRITE_DATA =>
-                if (count = 2 ** WRITE_DATA_WIDTH - 1) then
+                if (count = 2 ** DATA_WIDTH - 1) then
                     state <= READ_BUS_REQ; -- back to starting stage, request the reading bus again;
                 else
                     state <= SINC_WRITE_ADDR; -- burst write until the data in the buffer are all written to the SRAM;
@@ -147,7 +146,7 @@ begin
             read_bus_acquire <= '1';
             writein_en <= '1';
             read_addr_sel <= '1';
-            if (count = 2 ** WRITE_DATA_WIDTH - 1) then
+            if (count = 2 ** DATA_WIDTH - 1) then
                 count_clr <= '1';
             else
                 count_en <= '1';
@@ -163,7 +162,7 @@ begin
             write_bus_acquire <= '1';
             write_addr_sel <= '1';
             write_en <= '1';
-            if (count = 2 ** WRITE_DATA_WIDTH - 1) then
+            if (count = 2 ** DATA_WIDTH - 1) then
                 count_clr <= '1';
             else
                 count_en <= '1';
@@ -198,7 +197,7 @@ begin
     begin
         if (rising_edge(clock)) then
             if (writein_en = '1') then --change the following logic to processed data!
-                mem(readin_address) <= read_data(READ_DATA_WIDTH - 1 downto 0);
+                mem(readin_address) <= read_data(DATA_WIDTH - 1 downto 0);
             end if;
         end if;
     end process;
