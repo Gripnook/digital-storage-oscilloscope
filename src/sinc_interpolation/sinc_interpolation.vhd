@@ -33,7 +33,16 @@ entity sinc_interpolation is
 end sinc_interpolation;
 
 architecture arch of sinc_interpolation is
-
+    component sampling_selector is
+        port (
+            clock : in std_logic; 
+            enable : in std_logic; 
+            reset :   in std_logic; 
+            upsample : in std_logic_vector(2 downto 0);
+            read_in : in std_logic_vector(READ_DATA_WIDTH - 1 downto 0); 
+            write_out : out std_logic_vector(WRITE_DATA_WIDTH - 1 downto 0)
+        );
+    end component;
     constant WRITE_ADDR_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(WRITE_ADDR_WIDTH))));
     type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE_ADDR, SINC_WRITE_DATA, SINC_DONE);
     signal state : state_type := READ_BUS_REQ;
@@ -48,9 +57,18 @@ architecture arch of sinc_interpolation is
     signal count : std_logic_vector range 0 to WRITE_ADDR_WIDTH - 1;
     signal count_en : std_logic;
     signal count_clr : std_logic;
+    signal sel_enb: std_logic;
 
 begin
-
+    selector : sampling_selector
+        port map (
+            clock => clock,
+            enable => sel_enb,
+            reset => reset,
+            upsample => upsample,
+            read_in => read_data,
+            write_out => write_data        
+        );
     state_transition : process (clock, reset)
     begin
         if (reset = '1') then
@@ -105,7 +123,8 @@ begin
         write_addr_sel <= '0';
         count_en <= '0';
         count_clr <= '0';
-        write_en <= '0'
+        write_en <= '0';
+        sel_en <= '0';
 
         case state is
         when READ_BUS_REQ =>
@@ -119,6 +138,7 @@ begin
         when SINC_PROC =>
             read_bus_acquire <= '1';
             read_addr_sel <= '1';
+            sel_en <= '1';
         when SINC_WRITE_IN =>
             read_bus_acquire <= '1';
             writein_en <= '1';
@@ -130,6 +150,7 @@ begin
             end if;
         when WRITE_BUS_REQ =>
             read_bus_acquire <= '0';
+            sel_en <= '0';
             write_bus_acquire <= '1';
         when SINC_WRITE_ADDR =>
             write_bus_acquire <= '1';
