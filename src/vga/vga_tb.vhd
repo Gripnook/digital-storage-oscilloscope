@@ -74,18 +74,18 @@ architecture arch of vga_tb is
     signal reset : std_logic;
 
     signal mem_bus_grant : std_logic;
-    signal mem_data : std_logic_vector(11 downto 0);
+    signal mem_data : std_logic_vector(DATA_WIDTH - 1 downto 0);
     signal mem_bus_acquire : std_logic;
-    signal mem_address : std_logic_vector(8 downto 0);
+    signal mem_address : std_logic_vector(ADDR_WIDTH - 1 downto 0);
     signal pixel_clock : std_logic;
     signal rgb : std_logic_vector(23 downto 0);
     signal hsync : std_logic;
     signal vsync : std_logic;
 
     signal write_bus_acquire : std_logic := '0';
-    signal write_address : std_logic_vector(8 downto 0) := (others => '0');
+    signal write_address : std_logic_vector(ADDR_WIDTH - 1 downto 0) := (others => '0');
     signal write_en : std_logic := '0';
-    signal write_data : std_logic_vector(11 downto 0) := (others => '0');
+    signal write_data : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');
     signal write_bus_grant : std_logic := '0';
 
     signal r : std_logic_vector(7 downto 0);
