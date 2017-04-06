@@ -14,9 +14,11 @@ entity digital_storage_oscilloscope is
         clock : in std_logic;
         reset_n : in std_logic;
         timebase : in std_logic_vector(2 downto 0);
+        interpolation_enable : in std_logic;
         trigger_up_n : in std_logic;
         trigger_down_n : in std_logic;
         trigger_type : in std_logic;
+        trigger_correction_enable : in std_logic;
         adc_sclk : out std_logic;
         adc_din : out std_logic;
         adc_dout : in std_logic;
@@ -42,8 +44,10 @@ architecture arch of digital_storage_oscilloscope is
             vertical_scale : in std_logic_vector(31 downto 0); -- mV/div
             upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
             downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
+            interpolation_enable : in std_logic;
             trigger_type : in std_logic; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
+            trigger_correction_enable : in std_logic;
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
             adc_sample : in std_logic;
             pixel_clock : out std_logic;
@@ -111,6 +115,13 @@ architecture arch of digital_storage_oscilloscope is
     signal fifo_rdempty_n : std_logic;
     signal fifo_wrfull : std_logic;
 
+    signal timebase_delayed, timebase_stable : std_logic_vector(2 downto 0);
+    signal interpolation_enable_delayed, interpolation_enable_stable : std_logic;
+    signal trigger_up_n_delayed, trigger_up_n_stable : std_logic;
+    signal trigger_down_n_delayed, trigger_down_n_stable : std_logic;
+    signal trigger_type_delayed, trigger_type_stable : std_logic;
+    signal trigger_correction_enable_delayed, trigger_correction_enable_stable : std_logic;
+
     signal horizontal_scale : std_logic_vector(31 downto 0);
     signal vertical_scale : std_logic_vector(31 downto 0);
     signal upsample : integer range 0 to MAX_UPSAMPLE;
@@ -161,8 +172,10 @@ begin
             vertical_scale => vertical_scale,
             upsample => upsample,
             downsample => downsample,
-            trigger_type => trigger_type,
+            interpolation_enable => interpolation_enable_stable,
+            trigger_type => trigger_type_stable,
             trigger_ref => trigger_ref,
+            trigger_correction_enable => trigger_correction_enable_stable,
             adc_data => adc_data,
             adc_sample => adc_sample_clk2,
             pixel_clock => pixel_clock,
@@ -221,14 +234,45 @@ begin
         end if;
     end process;
 
-    horizontal_configuration : process (timebase)
+    input_registers : process (clock, reset_clk2)
+    begin
+        if (reset_clk2 = '1') then
+            timebase_delayed <= (others => '0');
+            timebase_stable <= (others => '0');
+            interpolation_enable_delayed <= '0';
+            interpolation_enable_stable <= '0';
+            trigger_up_n_delayed <= '0';
+            trigger_up_n_stable <= '0';
+            trigger_down_n_delayed <= '0';
+            trigger_down_n_stable <= '0';
+            trigger_type_delayed <= '0';
+            trigger_type_stable <= '0';
+            trigger_correction_enable_delayed <= '0';
+            trigger_correction_enable_stable <= '0';
+        elsif (rising_edge(clock)) then
+            timebase_delayed <= timebase;
+            timebase_stable <= timebase_delayed;
+            interpolation_enable_delayed <= interpolation_enable;
+            interpolation_enable_stable <= interpolation_enable_delayed;
+            trigger_up_n_delayed <= trigger_up_n;
+            trigger_up_n_stable <= trigger_up_n_delayed;
+            trigger_down_n_delayed <= trigger_down_n;
+            trigger_down_n_stable <= trigger_down_n_delayed;
+            trigger_type_delayed <= trigger_type;
+            trigger_type_stable <= trigger_type_delayed;
+            trigger_correction_enable_delayed <= trigger_correction_enable;
+            trigger_correction_enable_stable <= trigger_correction_enable_delayed;
+        end if;
+    end process;
+
+    horizontal_configuration : process (timebase_stable)
     begin
         -- default outputs
         horizontal_scale <= (others => '0');
         upsample <= 0;
         downsample <= 0;
         
-        case timebase is
+        case timebase_stable is
         when "000" =>
             horizontal_scale <= x"00000008";
             upsample <= 4;
@@ -282,7 +326,7 @@ begin
             cnt_en => trigger_ref_en,
             q => trigger_ref
         );
-    trigger_ref_en <= trigger_control_clr and (trigger_up_n xor trigger_down_n);
-    trigger_ref_up <= not trigger_up_n;
+    trigger_ref_en <= trigger_control_clr and (trigger_up_n_stable xor trigger_down_n_stable);
+    trigger_ref_up <= not trigger_up_n_stable;
 
 end architecture;
