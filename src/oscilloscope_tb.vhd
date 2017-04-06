@@ -23,8 +23,10 @@ architecture arch of oscilloscope_tb is
             vertical_scale : in std_logic_vector(31 downto 0) := x"00000200"; -- mV/div
             upsample : in integer range 0 to MAX_UPSAMPLE; -- upsampling rate is 2 ** upsample
             downsample : in integer range 0 to MAX_DOWNSAMPLE; -- downsampling rate is 2 ** downsample
+            interpolation_enable : in std_logic := '1';
             trigger_type : in std_logic := '1'; -- '1' for rising edge, '0' for falling edge
             trigger_ref : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0) := x"800";
+            trigger_correction_enable : in std_logic := '1';
             adc_data : in std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
             adc_sample : in std_logic;
             pixel_clock : out std_logic;

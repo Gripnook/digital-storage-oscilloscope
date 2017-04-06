@@ -31,6 +31,7 @@ vcom vga/vga_timing_generator.vhd
 vcom vga/vga_buffer.vhd
 vcom vga/vga.vhd
 vcom triggering/triggering.vhd
+vcom triggering/trigger_correction.vhd
 vcom data_acquisition/data_acquisition.vhd
 vcom sinc_interpolation/Hlp2.vhd
 vcom sinc_interpolation/Hlp4.vhd
