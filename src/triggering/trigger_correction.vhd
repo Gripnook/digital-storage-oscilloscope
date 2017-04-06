@@ -34,9 +34,12 @@ end trigger_correction;
 architecture arch of trigger_correction is
 
     constant MID_TRIGGER_ADDRESS : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(2 ** (READ_ADDR_WIDTH - 1), READ_ADDR_WIDTH));
+    constant MAX_TRIGGER_ADDRESS : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(2 ** (READ_ADDR_WIDTH - 1) + 2 ** MAX_UPSAMPLE - 1, READ_ADDR_WIDTH));
     constant MIN_TRIGGER_ADDRESS : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0) := std_logic_vector(to_unsigned(2 ** (READ_ADDR_WIDTH - 1) - 2 ** MAX_UPSAMPLE, READ_ADDR_WIDTH));
 
-    type state_type is (S_READ_BUS_REQ, S_TRIG_READ_ADDR, S_TRIG_READ_DATA, S_TRIG_CHECK, S_READ_SETUP, S_READ_ADDR, S_READ_DATA, S_WRITE_INTERNAL, S_WRITE_BUS_REQ, S_READ_INTERNAL, S_WRITE_DATA);
+    type state_type is (S_READ_BUS_REQ, S_TRIG_SETUP_READ_ADDR, S_TRIG_SETUP_READ_DATA, S_TRIG_SETUP_CHECK,
+        S_TRIG_DOWN_READ_ADDR, S_TRIG_DOWN_READ_DATA, S_TRIG_DOWN_CHECK, S_TRIG_UP_READ_ADDR, S_TRIG_UP_READ_DATA, S_TRIG_UP_CHECK,
+        S_READ_SETUP, S_READ_ADDR, S_READ_DATA, S_WRITE_INTERNAL, S_WRITE_BUS_REQ, S_READ_INTERNAL, S_WRITE_DATA);
     signal state : state_type := S_READ_BUS_REQ;
 
     type memory is array(0 to 2 ** WRITE_ADDR_WIDTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -65,10 +68,12 @@ architecture arch of trigger_correction is
     signal trigger_address_count : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
     signal trigger_address_count_en : std_logic;
     signal trigger_address_count_load : std_logic;
+    signal trigger_address_count_updown : std_logic;
 
     signal trigger : std_logic;
     signal trigger_address : std_logic_vector(READ_ADDR_WIDTH - 1 downto 0);
-    signal trigger_address_en : std_logic;
+    signal trigger_address_down_en : std_logic;
+    signal trigger_address_up_en : std_logic;
     signal trigger_address_load : std_logic;
 
 begin
@@ -98,8 +103,7 @@ begin
 
     trigger_address_counter : lpm_counter
         generic map (
-            LPM_WIDTH => READ_ADDR_WIDTH,
-            LPM_DIRECTION => "DOWN"
+            LPM_WIDTH => READ_ADDR_WIDTH
         )
         port map (
             clock => clock,
@@ -107,6 +111,7 @@ begin
             sload => trigger_address_count_load,
             data => MID_TRIGGER_ADDRESS,
             cnt_en => trigger_address_count_en,
+            updown => trigger_address_count_updown,
             q => trigger_address_count
         );
 
@@ -148,8 +153,10 @@ begin
         if (reset = '1') then
             trigger_address <= (others => '0');
         elsif (rising_edge(clock)) then
-            if (trigger_address_en = '1') then
+            if (trigger_address_down_en = '1') then
                 trigger_address <= std_logic_vector(unsigned(trigger_address_count) + 1);
+            elsif (trigger_address_up_en = '1') then
+                trigger_address <= trigger_address_count;
             elsif (trigger_address_load = '1') then
                 trigger_address <= MID_TRIGGER_ADDRESS;
             end if;
@@ -168,24 +175,46 @@ begin
             when S_READ_BUS_REQ =>
                 if (read_bus_grant = '1') then
                     if (enable = '1') then
-                        state <= S_TRIG_READ_ADDR;
+                        state <= S_TRIG_SETUP_READ_ADDR;
                     else
                         state <= S_READ_SETUP;
                     end if;
                 else
                     state <= S_READ_BUS_REQ;
                 end if;
-            when S_TRIG_READ_ADDR =>
-                state <= S_TRIG_READ_DATA;
-            when S_TRIG_READ_DATA =>
-                state <= S_TRIG_CHECK;
-            when S_TRIG_CHECK =>
+            when S_TRIG_SETUP_READ_ADDR =>
+                state <= S_TRIG_SETUP_READ_DATA;
+            when S_TRIG_SETUP_READ_DATA =>
+                state <= S_TRIG_SETUP_CHECK;
+            when S_TRIG_SETUP_CHECK =>
+                if (trigger = '1') then
+                    state <= S_TRIG_UP_READ_ADDR;
+                else
+                    state <= S_TRIG_DOWN_READ_ADDR;
+                end if;
+            when S_TRIG_DOWN_READ_ADDR =>
+                state <= S_TRIG_DOWN_READ_DATA;
+            when S_TRIG_DOWN_READ_DATA =>
+                state <= S_TRIG_DOWN_CHECK;
+            when S_TRIG_DOWN_CHECK =>
                 if (trigger = '1') then
                     state <= S_READ_SETUP;
                 elsif (trigger_address_count = MIN_TRIGGER_ADDRESS) then
                     state <= S_READ_SETUP;
                 else
-                    state <= S_TRIG_READ_ADDR;
+                    state <= S_TRIG_DOWN_READ_ADDR;
+                end if;
+            when S_TRIG_UP_READ_ADDR =>
+                state <= S_TRIG_UP_READ_DATA;
+            when S_TRIG_UP_READ_DATA =>
+                state <= S_TRIG_UP_CHECK;
+            when S_TRIG_UP_CHECK =>
+                if (trigger = '0') then
+                    state <= S_READ_SETUP;
+                elsif (trigger_address_count = MAX_TRIGGER_ADDRESS) then
+                    state <= S_READ_SETUP;
+                else
+                    state <= S_TRIG_UP_READ_ADDR;
                 end if;
             when S_READ_SETUP =>
                 state <= S_READ_ADDR;
@@ -233,8 +262,10 @@ begin
         write_en <= '0';
         trigger_address_count_en <= '0';
         trigger_address_count_load <= '0';
+        trigger_address_count_updown <= '0';
         input_reg_en <= '0';
-        trigger_address_en <= '0';
+        trigger_address_down_en <= '0';
+        trigger_address_up_en <= '0';
         trigger_address_load <= '0';
 
         case state is
@@ -249,18 +280,48 @@ begin
                     trigger_address_load <= '1';
                 end if;
             end if;
-        when S_TRIG_READ_ADDR =>
+        when S_TRIG_SETUP_READ_ADDR =>
             read_bus_acquire <= '1';
             read_address_sel <= '1';
-        when S_TRIG_READ_DATA =>
+        when S_TRIG_SETUP_READ_DATA =>
             read_bus_acquire <= '1';
             read_address_sel <= '1';
-        when S_TRIG_CHECK =>
+        when S_TRIG_SETUP_CHECK =>
+            read_bus_acquire <= '1';
+            read_address_sel <= '1';
+            trigger_address_count_en <= '1';
+            if (trigger = '1') then
+                trigger_address_count_updown <= '1';
+            end if;
+        when S_TRIG_DOWN_READ_ADDR =>
+            read_bus_acquire <= '1';
+            read_address_sel <= '1';
+        when S_TRIG_DOWN_READ_DATA =>
+            read_bus_acquire <= '1';
+            read_address_sel <= '1';
+        when S_TRIG_DOWN_CHECK =>
             read_bus_acquire <= '1';
             read_address_sel <= '1';
             if (trigger = '1') then
-                trigger_address_en <= '1';
+                trigger_address_down_en <= '1';
             elsif (trigger_address_count = MIN_TRIGGER_ADDRESS) then
+                trigger_address_load <= '1';
+            else
+                trigger_address_count_en <= '1';
+            end if;
+        when S_TRIG_UP_READ_ADDR =>
+            read_bus_acquire <= '1';
+            read_address_sel <= '1';
+        when S_TRIG_UP_READ_DATA =>
+            read_bus_acquire <= '1';
+            read_address_sel <= '1';
+        when S_TRIG_UP_CHECK =>
+            read_bus_acquire <= '1';
+            read_address_sel <= '1';
+            trigger_address_count_updown <= '1';
+            if (trigger = '0') then
+                trigger_address_up_en <= '1';
+            elsif (trigger_address_count = MAX_TRIGGER_ADDRESS) then
                 trigger_address_load <= '1';
             else
                 trigger_address_count_en <= '1';

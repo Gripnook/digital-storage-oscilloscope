@@ -40,4 +40,4 @@ run 20ms
 mem load -infile triggering/test-signals/test_signal2.txt -format bin -filldata 0 /trigger_correction_tb/rom/mem/MEMORY/mem_data
 
 # Run
-run 20ms
+run 25ms

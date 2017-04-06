@@ -21,14 +21,14 @@ set_false_path -from adc_clk_pll|adc_clock_inst|altera_pll_i|general[0].gpll~PLL
 
 # Constrain the input I/O path
 
-set_input_delay -clock clock -max 2 [get_ports timebase*]
-set_input_delay -add_delay -clock clock -min 0 [get_ports timebase*]
+set_input_delay -clock clock -max 3 [get_ports timebase*]
+set_input_delay -add_delay -clock clock -min 2 [get_ports timebase*]
 
 set_input_delay -clock clock -max 3 [get_ports interpolation_enable]
 set_input_delay -add_delay -clock clock -min 2 [get_ports interpolation_enable]
 
-set_input_delay -clock clock -max 2 [get_ports trigger*]
-set_input_delay -add_delay -clock clock -min 0 [get_ports trigger*]
+set_input_delay -clock clock -max 3 [get_ports trigger*]
+set_input_delay -add_delay -clock clock -min 2 [get_ports trigger*]
 
 set_input_delay -clock adc_clk_pll|adc_clock_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk -max 2 [get_ports adc_dout]
 set_input_delay -add_delay -clock adc_clk_pll|adc_clock_inst|altera_pll_i|general[0].gpll~PLL_OUTPUT_COUNTER|divclk -min 0 [get_ports adc_dout]
