@@ -11,8 +11,8 @@ architecture arch of data_acquisition_tb is
         generic (
             ADDR_WIDTH : integer := 4;
             DATA_WIDTH : integer := 8;
-            MAX_UPSAMPLE : integer := 5;
-            MAX_DOWNSAMPLE : integer := 2
+            MAX_UPSAMPLE : integer := 4;
+            MAX_DOWNSAMPLE : integer := 3
         );
         port (
             clock : in std_logic;
@@ -99,8 +99,8 @@ architecture arch of data_acquisition_tb is
 
     signal adc_data : std_logic_vector(7 downto 0);
     signal adc_sample : std_logic;
-    signal upsample : integer range 0 to 5;
-    signal downsample : integer range 0 to 2;
+    signal upsample : integer range 0 to 4;
+    signal downsample : integer range 0 to 3;
 
     signal write_bus_grant : std_logic;
     signal write_bus_acquire : std_logic;

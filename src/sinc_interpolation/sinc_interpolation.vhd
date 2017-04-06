@@ -59,7 +59,7 @@ architecture arch of sinc_interpolation is
     constant HLP16_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP16_LENGTH / 2;
     constant HLP16_END_ADDR : integer := HLP16_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
 
-    type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_IN, WRITE_BUS_REQ, SINC_WRITE);
+    type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_INTERNAL, WRITE_BUS_REQ, SINC_READ_INTERNAL, SINC_WRITE);
     signal state : state_type := READ_BUS_REQ;
 
     type memory is array(0 to 2 ** READ_ADDR_WIDTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -186,8 +186,8 @@ begin
             when SINC_READ_DATA =>
                 state <= SINC_PROC;
             when SINC_PROC =>
-                state <= SINC_WRITE_IN;
-            when SINC_WRITE_IN =>
+                state <= SINC_WRITE_INTERNAL;
+            when SINC_WRITE_INTERNAL =>
                 if (read_address_internal = READ_ADDR_MAX) then
                     state <= WRITE_BUS_REQ;
                 else
@@ -195,15 +195,17 @@ begin
                 end if;
             when WRITE_BUS_REQ =>
                 if (write_bus_grant = '1') then
-                    state <= SINC_WRITE;
+                    state <= SINC_READ_INTERNAL;
                 else
                     state <= WRITE_BUS_REQ;
                 end if;
+            when SINC_READ_INTERNAL =>
+                state <= SINC_WRITE;
             when SINC_WRITE =>
                 if (read_address_internal = end_address) then
                     state <= READ_BUS_REQ;
                 else
-                    state <= SINC_WRITE;
+                    state <= SINC_READ_INTERNAL;
                 end if;
             when others =>
                  null;
@@ -240,7 +242,7 @@ begin
         when SINC_PROC =>
             read_bus_acquire <= '1';
             filter_en <= '1';
-        when SINC_WRITE_IN =>
+        when SINC_WRITE_INTERNAL =>
             read_bus_acquire <= '1';
             memwrite <= '1';
             read_address_en <= '1';
@@ -250,6 +252,8 @@ begin
                 read_address_load <= '1';
                 write_address_clr <= '1';
             end if;
+        when SINC_READ_INTERNAL =>
+            write_bus_acquire <= '1';
         when SINC_WRITE =>
             write_bus_acquire <= '1';
             write_en <= '1';
