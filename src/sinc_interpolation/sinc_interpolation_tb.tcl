@@ -1,7 +1,7 @@
 proc AddWaves {} {
     # Add waves we're interested in to the Wave window
-    add wave -position end sim:/trigger_correction_tb/clock
-    add wave -position end sim:/trigger_correction_tb/reset
+    add wave -position end sim:/sinc_interpolation_tb/clock
+    add wave -position end sim:/sinc_interpolation_tb/reset
 }
 
 vlib work
@@ -28,7 +28,11 @@ AddWaves
 
 # Load first test signal into memory
 run 10ns
-mem load -infile triggering/test-signals/test_signal1.txt -format bin -filldata 0 /sinc_interpolation_tb/rom/MEMORY/read_data
+mem load -infile sinc_interpolation/test-signals/test_signal1.txt -format bin -filldata 0 /sinc_interpolation_tb/rom/mem/MEMORY/mem_data
+run 1000us
+mem save -outfile sinc_interpolation/test-results/test_signal1.txt -format hex -wordsperline 1 -noaddress /sinc_interpolation_tb/mem/mem/MEMORY/mem_data
 
-# Run
-run 25ms
+# Load second test signal into memory
+mem load -infile sinc_interpolation/test-signals/test_signal2.txt -format bin -filldata 0 /sinc_interpolation_tb/rom/mem/MEMORY/mem_data
+run 1000us
+mem save -outfile sinc_interpolation/test-results/test_signal2.txt -format hex -wordsperline 1 -noaddress /sinc_interpolation_tb/mem/mem/MEMORY/mem_data
