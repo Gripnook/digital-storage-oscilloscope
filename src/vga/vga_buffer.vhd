@@ -34,7 +34,7 @@ architecture arch of vga_buffer is
 
     type state_type is (BUFF_IDLE, BUS_ACQ, BUFF_READ_ADDR, BUFF_READ_DATA, BUFF_WRITE, BUFF_DONE);
     signal state : state_type := BUFF_IDLE;
-    
+
     type memory is array(0 to PLOT_WIDTH - 1) of integer range 0 to PLOT_HEIGHT - 1;
     signal mem : memory;
 

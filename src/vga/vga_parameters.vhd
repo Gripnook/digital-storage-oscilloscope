@@ -19,19 +19,19 @@ package vga_parameters is
     constant V_BP     : integer   := 37;  -- vertical back porch width in rows
     constant V_FP     : integer   := 23;  -- vertical front porch width in rows
     constant V_POL    : std_logic := '1'; -- vertical sync pulse polarity (1 = positive, 0 = negative)
-    
+
     constant H_PIXELS_BIT_LENGTH : integer := integer(ceil(log2(real(H_PIXELS))));
     constant V_PIXELS_BIT_LENGTH : integer := integer(ceil(log2(real(V_PIXELS))));
-    
+
     constant TEXT_ROW_RANGE : integer := (V_PIXELS + 15) / 16;
     constant TEXT_COL_RANGE : integer := (H_PIXELS + 7) / 8;
-    
+
     constant TEXT_ROW_BIT_LENGTH : integer := integer(ceil(log2(real(TEXT_ROW_RANGE))));
     constant TEXT_COL_BIT_LENGTH : integer := integer(ceil(log2(real(TEXT_COL_RANGE))));
 
     constant PLOT_WIDTH : integer := 512;
     constant PLOT_HEIGHT : integer := 512;
-    
+
     constant PLOT_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_WIDTH))));
     constant PLOT_HEIGHT_BIT_LENGTH : integer := integer(ceil(log2(real(PLOT_HEIGHT))));
 
@@ -41,10 +41,10 @@ package vga_parameters is
 
     constant GRID_WIDTH : integer := PLOT_WIDTH / 8;
     constant GRID_HEIGHT : integer := PLOT_HEIGHT / 8;
-    
+
     constant GRID_WIDTH_BIT_LENGTH : integer := integer(ceil(log2(real(GRID_WIDTH))));
     constant GRID_HEIGHT_BIT_LENGTH : integer := integer(ceil(log2(real(GRID_HEIGHT))));
-    
+
     constant X0_GRID_VECTOR : unsigned(GRID_WIDTH_BIT_LENGTH - 1 downto 0) := to_unsigned(X0, GRID_WIDTH_BIT_LENGTH);
     constant Y0_GRID_VECTOR : unsigned(GRID_HEIGHT_BIT_LENGTH - 1 downto 0) := to_unsigned(Y0, GRID_HEIGHT_BIT_LENGTH);
 

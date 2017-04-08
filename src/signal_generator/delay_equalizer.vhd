@@ -1,7 +1,7 @@
 -- Implements a delay equalizer that updates the frequency_control_out signal with
 -- the value of the frequency_control_in signal when the asserted update_in signal has propagated
 -- through the internal registers. Otherwise, the previous value is stored and output.
--- 
+--
 -- A chain of delay equalizers will ensure that the outputs change at a rate of one-bit per clock
 -- cycle when a new input is asserted and the update_in signal is propagated through the chain.
 
@@ -26,7 +26,7 @@ architecture arch of delay_equalizer is
     signal frequency_control_next : std_logic;
 
 begin
-    
+
     regs : process (clock, reset)
     begin
         if (reset = '1') then

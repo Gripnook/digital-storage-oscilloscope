@@ -1,3 +1,9 @@
+-- The top level entity for the oscilloscope synthesis. It provides an
+-- interface between the push-buttons and switches on the DE1-SoC board
+-- and the oscilloscope modules. It also provides ADC sampling and
+-- synchronization between the ADC clock domain and the oscilloscope
+-- clock domain. It also synchronizes the reset signals to each clock.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
@@ -126,7 +132,7 @@ architecture arch of digital_storage_oscilloscope is
     signal vertical_scale : std_logic_vector(31 downto 0);
     signal upsample : integer range 0 to MAX_UPSAMPLE;
     signal downsample : integer range 0 to MAX_DOWNSAMPLE;
-    
+
     signal trigger_ref : std_logic_vector(ADC_DATA_WIDTH - 1 downto 0);
     signal trigger_ref_up : std_logic;
     signal trigger_ref_en : std_logic;
@@ -134,7 +140,7 @@ architecture arch of digital_storage_oscilloscope is
     signal trigger_control_clr : std_logic;
 
 begin
-    
+
     reset <= not reset_n;
 
     reset_synchronization_clk1 : process (adc_clk, reset_n)
@@ -271,7 +277,7 @@ begin
         horizontal_scale <= (others => '0');
         upsample <= 0;
         downsample <= 0;
-        
+
         case timebase_stable is
         when "000" =>
             horizontal_scale <= x"00000008";

@@ -85,7 +85,7 @@ begin
         reset <= '0';
 
         trigger_ref <= x"80";
-        
+
         trigger_type <= '1';
 
         adc_sample <= '1';

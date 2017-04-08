@@ -3,11 +3,11 @@
 -- a trigger signal before it begins processing the data. It then saves data from
 -- before the trigger point and after the trigger point, such that the trigger
 -- signal always corresponds to the midpoint of the captured waveform.
--- 
+--
 -- The module also upsamples the waveform according to the specified upsampling rate.
 -- This corresponds to inserting zeros between sample points, and this can be used
 -- to interpolate the waveform at those points in a later processing step.
--- 
+--
 -- The module can also downsample the waveform according to the specified downsampling
 -- rate. This corresponds to skipping over sample points to "zoom out" of the waveform.
 
@@ -45,7 +45,7 @@ entity data_acquisition is
 end data_acquisition;
 
 architecture arch of data_acquisition is
-    
+
     type state_type is (IDLE, TRIGGERED, BUS_WAIT, RAM_READ_ADDR, RAM_READ_DATA, BUS_WRITE);
     signal state : state_type := IDLE;
 
@@ -62,7 +62,7 @@ architecture arch of data_acquisition is
     signal upsample_internal : integer range 0 to MAX_UPSAMPLE;
     signal upsample_ceil : std_logic_vector(MAX_UPSAMPLE - 1 downto 0);
     signal trigger_address : std_logic_vector(RAM_ADDR_WIDTH - 1 downto 0);
-    
+
     signal upsample_count : std_logic_vector(MAX_UPSAMPLE - 1 downto 0);
     signal upsample_cnt_en, upsample_cnt_clr : std_logic;
     signal upsample_off : std_logic;
@@ -160,6 +160,7 @@ begin
         end if;
     end process;
 
+    -- the maximum value of upsample_count is 2 ** upsample_internal - 1
     upsample_conversion : process (upsample_internal)
         variable upsample_upper_bound : std_logic_vector(MAX_UPSAMPLE downto 0);
     begin

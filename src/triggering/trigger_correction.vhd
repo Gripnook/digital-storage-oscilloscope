@@ -1,3 +1,11 @@
+-- A module which attempts to recenter a waveform on a trigger point if it can find one.
+-- It takes as inputs the parameters with which the trigger was obtained, and can be
+-- configured with the maximum upsample rate, which it uses as a search interval.
+--
+-- The purpose of this module is to attempt to correct the trigger point of an interpolated waveform
+-- by using the interpolated data itself. This provides a more stable waveform over multiple video
+-- frames. In order to demonstrate this effect, the correction can be enabled or disabled using an input.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;

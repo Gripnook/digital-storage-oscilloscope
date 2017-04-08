@@ -18,7 +18,7 @@ entity vga_text_address_generator is
 end vga_text_address_generator;
 
 architecture arch of vga_text_address_generator is
-    
+
     signal row_vector : std_logic_vector(V_PIXELS_BIT_LENGTH - 1 downto 0);
     signal column_vector : std_logic_vector(H_PIXELS_BIT_LENGTH - 1 downto 0);
 

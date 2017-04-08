@@ -27,7 +27,7 @@ entity divider is
 end divider;
 
 architecture arch of divider is
-    
+
     constant DATA_WIDTH_LENGTH : integer := integer(ceil(log2(real(DATA_WIDTH))));
 
     constant ZERO : std_logic_vector(DATA_WIDTH - 1 downto 0) := (others => '0');

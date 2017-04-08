@@ -21,7 +21,7 @@ architecture arch of accumulator is
     signal Cout_next : std_logic;
 
 begin
-    
+
     B_next <= A xor B xor Cin;
     Cout_next <= (A and B) or (A and Cin) or (B and Cin);
 

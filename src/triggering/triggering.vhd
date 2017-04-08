@@ -1,7 +1,9 @@
 -- A module that generates a trigger signal on the rising or falling edge of an input
 -- signal sampled by an ADC. Only rising or falling edges that cross a trigger reference
--- level generate trigger signals.
--- 
+-- level generate trigger signals. An automatic trigger is also generated if there has not
+-- been a trigger in a long period of time. This allows the user to still see a waveform
+-- on-screen, which can help them trigger on it.
+--
 -- The module also outputs the frequency at which the trigger occurs. In order to diminish
 -- the effect of trigger jitter on this measurement, a running average is used. The timing
 -- of the frequency updates is not specified.

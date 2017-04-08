@@ -1,6 +1,6 @@
 -- Implements a frequency synthesizer that uses an N-bit input to select the output frequency.
 -- The output frequency is given by frequency_control * clock_rate / 2 ** N
--- 
+--
 -- Uses a pipelined adder with delay equalizer as part of an accumulator to generate the frequency.
 
 library ieee;

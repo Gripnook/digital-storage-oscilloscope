@@ -1,3 +1,5 @@
+-- A module that interfaces with the LTC2308 ADC to obtain sampled data.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
@@ -66,7 +68,7 @@ begin
         end if;
     end process;
     adc_sclk <= clock and adc_sclk_en;
-    
+
     adc_convst <= '1' when unsigned(adc_conv_count) = 0 else '0';
 
     din_reg : process (clock, reset)
@@ -92,9 +94,9 @@ begin
             end if;
         end if;
     end process;
-    
+
     adc_sample_internal <= '1' when unsigned(adc_conv_count) = ADC_DOUT_START + ADC_DATA_WIDTH else '0';
-    
+
     output_reg : process (clock, reset)
     begin
         if (reset = '1') then

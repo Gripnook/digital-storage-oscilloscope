@@ -50,7 +50,7 @@ architecture arch of vga_text_generator is
         ascii := std_logic_vector(("000" & unsigned(bcd)) + unsigned(ASCII_0)); -- add the character 0 in ASCII
         return ascii;
     end to_ascii;
-    
+
     constant TITLE_STRING : string := "DIGITAL STORAGE OSCILLOSCOPE";
     constant TITLE : std_logic_vector(8 * TITLE_STRING'length - 1 downto 0) := to_slv(TITLE_STRING);
     constant TITLE_START : integer := (TEXT_COL_RANGE - TITLE_STRING'length) / 2;

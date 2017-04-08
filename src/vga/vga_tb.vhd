@@ -109,7 +109,7 @@ begin
             pixel_clock => pixel_clock,
             rgb => rgb,
             hsync => hsync,
-            vsync => vsync 
+            vsync => vsync
         );
 
     rom : arbitrated_memory

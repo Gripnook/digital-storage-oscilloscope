@@ -152,7 +152,7 @@ architecture arch of vga is
     signal display_data_delayed : std_logic;
 
     signal mem_bus_grant_delayed : std_logic;
-    
+
     signal frame_count : std_logic_vector(31 downto 0);
     signal frame_count_en : std_logic;
 

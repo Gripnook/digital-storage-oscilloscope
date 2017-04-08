@@ -82,7 +82,7 @@ begin
 
         enable <= '1';
         clear <= '0';
-        
+
         data <= std_logic_vector(to_unsigned(24, 16));
         wait for clock_period;
         data <= std_logic_vector(to_unsigned(7, 16));
@@ -102,7 +102,7 @@ begin
         clear <= '0';
 
         enable <= '1';
-        
+
         data <= std_logic_vector(to_unsigned(65535, 16));
         wait for clock_period;
         data <= std_logic_vector(to_unsigned(0, 16));

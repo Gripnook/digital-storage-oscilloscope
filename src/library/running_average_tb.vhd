@@ -69,7 +69,7 @@ begin
         reset <= '0';
 
         load <= '1';
-        
+
         data_in <= std_logic_vector(to_unsigned(16, 32));
         wait for clock_period;
         assert_equal(average, std_logic_vector(to_unsigned(2, 32)), error_count);

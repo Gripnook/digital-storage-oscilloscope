@@ -217,7 +217,7 @@ begin
             pixel_clock => pixel_clock,
             rgb => rgb,
             hsync => hsync,
-            vsync => vsync 
+            vsync => vsync
         );
 
     clock_process : process

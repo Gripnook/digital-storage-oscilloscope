@@ -1,3 +1,10 @@
+-- A module that performs interpolation of upsampled data using the sin(x)/x interpolation
+-- method. It takes as input the rate at which the signal has been upsampled, and it interfaces
+-- with an arbitrated memory block which contains the signal in question. It then processes the
+-- signal and outputs it to a second arbitrated memory block. In order to keep the waveform
+-- centered on the trigger point, it shifts the output waveform according to the delay parameters
+-- of each filter, as specified in the filter_parameters package.
+
 library ieee;
 library lpm;
 use ieee.std_logic_1164.all;
@@ -47,16 +54,16 @@ architecture arch of sinc_interpolation is
     constant HLP1_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1);
     constant HLP1_END_ADDR : integer := HLP1_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
 
-    constant HLP2_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP2_LENGTH / 2;
+    constant HLP2_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP2_LENGTH / 2 + HLP2_PIPELINE_LENGTH;
     constant HLP2_END_ADDR : integer := HLP2_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
 
-    constant HLP4_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP4_LENGTH / 2;
+    constant HLP4_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP4_LENGTH / 2 + HLP4_PIPELINE_LENGTH;
     constant HLP4_END_ADDR : integer := HLP4_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
 
-    constant HLP8_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP8_LENGTH / 2;
+    constant HLP8_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP8_LENGTH / 2 + HLP8_PIPELINE_LENGTH;
     constant HLP8_END_ADDR : integer := HLP8_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
 
-    constant HLP16_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP16_LENGTH / 2;
+    constant HLP16_START_ADDR : integer := 2 ** (READ_ADDR_WIDTH - 1) - 2 ** (WRITE_ADDR_WIDTH - 1) + HLP16_LENGTH / 2 + HLP16_PIPELINE_LENGTH;
     constant HLP16_END_ADDR : integer := HLP16_START_ADDR + 2 ** WRITE_ADDR_WIDTH - 1;
 
     type state_type is (READ_BUS_REQ, SINC_READ_ADDR, SINC_READ_DATA, SINC_PROC, SINC_WRITE_INTERNAL, WRITE_BUS_REQ, SINC_READ_INTERNAL, SINC_WRITE);

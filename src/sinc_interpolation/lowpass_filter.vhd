@@ -1,3 +1,7 @@
+-- Encapsulates the various Hlp low pass filters into a single entity. The desired filter
+-- can be selected using the upsample input, and new data can be clocked in using the enable
+-- input. The delays of each filter are specified in the filter_parameters package.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -119,7 +123,7 @@ begin
     begin
         -- default output
         filter_out <= filter_out_1;
-        
+
         case upsample is
         when 1 =>
             filter_out <= filter_out_2(26 downto 15);

@@ -2,7 +2,7 @@
 -- used as an enable signal to a counter which controls the output of a ROM. The ROM
 -- stores precomputed value for a shifted sine wave. The update signal must be asserted for
 -- N clock cycles when changing the frequency_control input in order to avoid phase discontinuity.
--- 
+--
 -- The output frequency is related to frequency_control and the clock rate by
 -- output frequency = 1/100 * frequency_control * clock_rate / 2 ** N
 

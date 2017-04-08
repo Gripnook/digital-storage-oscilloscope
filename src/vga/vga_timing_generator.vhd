@@ -35,7 +35,7 @@ architecture behavior of vga_timing_generator is
     constant V_PERIOD : integer := V_PULSE + V_BP + V_PIXELS + V_FP;  -- total number of rows in column
     constant H_BIT_LENGTH : integer := integer(ceil(log2(real(H_PERIOD))));
     constant V_BIT_LENGTH : integer := integer(ceil(log2(real(V_PERIOD))));
-    
+
     signal h_count_internal : std_logic_vector(H_BIT_LENGTH - 1 downto 0) := (others => '0');
     signal h_count : integer range 0 to H_PERIOD - 1;
     signal v_count_internal : std_logic_vector(V_BIT_LENGTH - 1 downto 0) := (others => '0');
@@ -50,27 +50,27 @@ begin
         generic map (LPM_WIDTH => H_BIT_LENGTH)
         port map (clock => clock, aclr => reset, sclr => h_clr, q => h_count_internal);
     h_count <= to_integer(unsigned(h_count_internal));
-    
+
     h_clr <= '1' when (h_count = H_PERIOD - 1)
         else '0';
-    
+
     v_counter : lpm_counter
         generic map (LPM_WIDTH => V_BIT_LENGTH)
         port map (clock => clock, aclr => reset, sclr => v_clr, q => v_count_internal, cnt_en => v_count_en);
     v_count <= to_integer(unsigned(v_count_internal));
-    
+
     v_clr <= '1' when (v_count = V_PERIOD - 1)
         else '0';
     v_count_en <= h_clr;
-  
-    row <= (v_count - (V_PULSE + V_BP)) when (v_count >= V_PULSE + V_BP and v_count < V_PULSE + V_BP + V_PIXELS) 
+
+    row <= (v_count - (V_PULSE + V_BP)) when (v_count >= V_PULSE + V_BP and v_count < V_PULSE + V_BP + V_PIXELS)
         else V_PIXELS - 1;
-    column <= (h_count - (H_PULSE + H_BP)) when (h_count >= H_PULSE + H_BP and h_count < H_PULSE + H_BP + H_PIXELS) 
+    column <= (h_count - (H_PULSE + H_BP)) when (h_count >= H_PULSE + H_BP and h_count < H_PULSE + H_BP + H_PIXELS)
         else H_PIXELS - 1;
     blank_n <= '0' when ((v_count < V_PULSE + V_BP or v_count >= V_PULSE + V_BP + V_PIXELS) or
                         ((h_count < H_PULSE + H_BP or h_count >= H_PULSE + H_BP + H_PIXELS)))
         else '1';
-    
+
     hsync <= not H_POL when (h_count < H_PULSE) else
         H_POL;
     vsync <= not V_POL when (v_count < V_PULSE) else

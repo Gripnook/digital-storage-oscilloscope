@@ -1,16 +1,6 @@
 // memory data file (do not edit the following line - required for mem load use)
 // instance=/sinc_interpolation_tb/mem/mem/MEMORY/mem_data
 // format=hex addressradix=h dataradix=h version=1.0 wordsperline=1 noaddress
-7C5
-7CD
-7D1
-7D9
-7DE
-7E5
-7EB
-7F1
-7F8
-7FE
 804
 80A
 811
@@ -1025,3 +1015,13 @@ A04
 7B2
 7B8
 7BE
+7C5
+7CD
+7D1
+7D9
+7DE
+7E5
+7EB
+7F1
+7F8
+7FE

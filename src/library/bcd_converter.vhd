@@ -80,7 +80,7 @@ begin
     shift_count_done <= '1' when shift_count = std_logic_vector(to_unsigned(DATA_WIDTH, DATA_WIDTH_LENGTH)) else '0';
 
     gen_digits : for i in 0 to BCD_DIGITS - 1 generate
-    
+
         digit_shiftreg : lpm_shiftreg
             generic map (
                 LPM_WIDTH => 4,

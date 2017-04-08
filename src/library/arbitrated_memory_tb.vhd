@@ -139,7 +139,7 @@ begin
 
         wait for clock_period;
         assert_equal(read_data, x"80", error_count);
-        
+
         read_bus_acquire <= '0';
 
         report "Done. Found " & integer'image(error_count) & " error(s).";

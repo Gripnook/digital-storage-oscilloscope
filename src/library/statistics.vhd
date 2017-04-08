@@ -1,3 +1,10 @@
+-- Generates statistics for a population of 2 ** POP_SIZE_WIDTH. A new data point
+-- can be clocked in every cycle using the enable input, and the data can be cleared
+-- using the clear input. The statistics are computed using the data that has been
+-- clocked in since the last clear input. It is up to the user to ensure that there
+-- are exactly 2 ** POP_SIZE_WIDTH data points if a correct average is required. The
+-- other statistical parameters do not depend on the number of data points.
+
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
@@ -21,7 +28,7 @@ entity statistics is
 end statistics;
 
 architecture arch of statistics is
-    
+
     signal accumulator : std_logic_vector(DATA_WIDTH + POP_SIZE_WIDTH - 1 downto 0);
     signal accumulator_next : std_logic_vector(DATA_WIDTH + POP_SIZE_WIDTH - 1 downto 0);
     signal maximum_internal : std_logic_vector(DATA_WIDTH - 1 downto 0);

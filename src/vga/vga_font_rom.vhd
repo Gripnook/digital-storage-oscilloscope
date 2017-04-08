@@ -32,12 +32,12 @@ entity vga_font_rom is
 end vga_font_rom;
 
 architecture behavioral of vga_font_rom is
-    
+
     constant ADDR_WIDTH : integer := 11;
     constant DATA_WIDTH : integer := 8;
 
     type rom_type is array(0 to 2 ** ADDR_WIDTH - 1) of std_logic_vector(DATA_WIDTH - 1 downto 0);
-    
+
     signal address : std_logic_vector(ADDR_WIDTH - 1 downto 0);
 
     -- ROM definition
@@ -2224,7 +2224,7 @@ architecture behavioral of vga_font_rom is
 begin
 
     address <= char_code & font_row;
-    
+
     -- address register to infer block RAM
     reg : process (clock, reset)
         variable data_out : std_logic_vector(DATA_WIDTH - 1 downto 0);
@@ -2237,5 +2237,5 @@ begin
             pixel_on <= data_out(to_integer(unsigned(not font_col)));
         end if;
     end process;
-    
+
 end behavioral;
