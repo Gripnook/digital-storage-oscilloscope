@@ -268,30 +268,30 @@ Next, we combined all the modules together into a top level DSO entity. We then 
 We then synthesized the design for the target FPGA. The synthesis results are shown in Table~\ref{tab:synthesis_results}, which shows a maximum clock frequency of 60.26~MHz. This meets our goal of a 50~MHz clock. We can also see that the design uses a large amount of the resources on the FPGA, with a logic utilization of 62~\% and a DSP block utilization of 100~\%. This is a result of the filters used for interpolation requiring a large amount of logic and registers.
 
 \begin{table}[!htb]
-    \centering
-    \caption{Synthesis results on the Cyclone V 5CSEMA5F31C6 FPGA using a 50~MHz clock.}
-    \label{tab:synthesis_results}
-    \begin{tabular}[c]{ | l | l | }
-    	\hline
-        \textbf{Family} & Cyclone V \\
-        \hline
-        \textbf{Device} & 5CSEMA5F31C6 \\
-        \hline
-        \textbf{Logic Utilization} & 19,901 / 32,070 ( 62~\% ) \\
-        \hline
-        \textbf{Total Registers} & 23770 \\
-        \hline
-        \textbf{Total Block Memory Bits} & 246,832 / 4,065,280 ( 6 \% ) \\
-        \hline
-        \textbf{Total DSP Blocks} & 87 / 87 ( 100 \% ) \\
-        \hline
-        \textbf{Fmax} & 60.26~MHz \\
-        \hline
-        \textbf{Setup Slack} & 3.405~ns \\
-        \hline
-        \textbf{Hold Slack} & 0.016~ns \\
-        \hline
-    \end{tabular}
+  \centering
+  \caption{Synthesis results on the Cyclone V 5CSEMA5F31C6 FPGA using a 50~MHz clock.}
+  \label{tab:synthesis_results}
+  \begin{tabular}[c]{ | l | l | }
+    \hline
+    \textbf{Family} & Cyclone V \\
+    \hline
+    \textbf{Device} & 5CSEMA5F31C6 \\
+    \hline
+    \textbf{Logic Utilization} & 19,901 / 32,070 ( 62~\% ) \\
+    \hline
+    \textbf{Total Registers} & 23770 \\
+    \hline
+    \textbf{Total Block Memory Bits} & 246,832 / 4,065,280 ( 6 \% ) \\
+    \hline
+    \textbf{Total DSP Blocks} & 87 / 87 ( 100 \% ) \\
+    \hline
+    \textbf{Fmax} & 60.26~MHz \\
+    \hline
+    \textbf{Setup Slack} & 3.405~ns \\
+    \hline
+    \textbf{Hold Slack} & 0.016~ns \\
+    \hline
+  \end{tabular}
 \end{table}
 
 We then connected the synthesized oscilloscope board to a function generator and measured the trigger frequency of a waveform over our target range of frequencies. The waveform was chosen to be a 2~V peak-peak sine wave with a 2~V offset in order to provide a reasonable waveform in the center of our vertical range. We compared our results to the frequency counter on a Rigol DS1054Z oscilloscope. The results are shown in Figure~\ref{fig:freq}. We observed a maximum error of 0.26~\%, occurring at a frequency of 161 kHz.
