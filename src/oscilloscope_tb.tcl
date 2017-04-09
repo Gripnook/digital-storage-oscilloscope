@@ -38,6 +38,7 @@ vcom sinc_interpolation/Hlp2.vhd
 vcom sinc_interpolation/Hlp4.vhd
 vcom sinc_interpolation/Hlp8.vhd
 vcom sinc_interpolation/Hlp16.vhd
+vcom sinc_interpolation/filter_parameters.vhd
 vcom sinc_interpolation/lowpass_filter.vhd
 vcom sinc_interpolation/sinc_interpolation.vhd
 vcom oscilloscope.vhd
