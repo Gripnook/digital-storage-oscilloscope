@@ -151,7 +151,7 @@ begin
         -- 1 kHz
         upsample <= 0;
         downsample <= 1;
-        horizontal_scale <= std_logic_vector(to_unsigned(128, 32));
+        horizontal_scale <= std_logic_vector(to_unsigned(256, 32));
         frequency_control <= x"0083";
         wait for 14 ms;
         wait for 14 ms;
@@ -166,7 +166,7 @@ begin
 
         -- 100 kHz
         upsample <= 4;
-        horizontal_scale <= std_logic_vector(to_unsigned(4, 32));
+        horizontal_scale <= std_logic_vector(to_unsigned(8, 32));
         frequency_control <= x"3333";
         wait for 14 ms;
 
